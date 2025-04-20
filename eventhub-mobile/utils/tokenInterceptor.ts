@@ -1,0 +1,101 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ADDRESS } from '@/constants/address';
+
+let isRefreshing = false;
+let failedQueue: any[] = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(prom => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedQueue = [];
+};
+
+const refreshToken = async (): Promise<string> => {
+  const refreshToken = await AsyncStorage.getItem('refreshToken');
+  if (!refreshToken) {
+    console.error('Refresh token не найден');
+    throw new Error('No refresh token available');
+  }
+
+  try {
+    const response = await fetch(
+      'http://' + ADDRESS + '/api/refresh',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Ошибка обновления токена:', response.status);
+      throw new Error('Failed to refresh token');
+    }
+
+    const data = await response.json();
+    await AsyncStorage.setItem('accessToken', data.access_token);
+    return data.access_token;
+  } catch (error) {
+    console.error('Ошибка при обновлении токена:', error);
+    throw error;
+  }
+};
+
+export const fetchWithToken = async (url: string, options: RequestInit = {}): Promise<Response> => {
+  try {
+    const token = await AsyncStorage.getItem('accessToken');
+    if (!token) {
+      console.error('Токен не найден');
+      throw new Error('No token available');
+    }
+    
+    const headers = {
+      ...options.headers,
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    };
+
+    const response = await fetch(url, { ...options, headers });
+    
+    if (response.status === 401 && !isRefreshing) {
+      isRefreshing = true;
+      
+      return new Promise((resolve, reject) => {
+        failedQueue.push({ resolve, reject });
+        
+        refreshToken()
+          .then(newToken => {
+            const newHeaders = {
+              ...options.headers,
+              'Authorization': `Bearer ${newToken}`,
+              'Content-Type': 'application/json',
+            };
+            
+            fetch(url, { ...options, headers: newHeaders })
+              .then(resolve)
+              .catch(reject);
+            
+            processQueue(null, newToken);
+          })
+          .catch(error => {
+            console.error('Ошибка при обновлении токена:', error);
+            processQueue(error, null);
+            reject(error);
+          })
+          .finally(() => {
+            isRefreshing = false;
+          });
+      });
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('Ошибка в fetchWithToken:', error);
+    throw error;
+  }
+}; 
