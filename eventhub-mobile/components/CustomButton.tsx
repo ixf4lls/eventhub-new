@@ -41,7 +41,6 @@ const CustomButton = ({
     },
     button_bordered: {
       boxSizing: 'border-box',
-      backgroundColor: '#ffffff',
       borderColor: type == 'action' ? colors.primary : colors.error,
       borderWidth: 2,
       width: '100%',

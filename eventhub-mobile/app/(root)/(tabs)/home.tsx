@@ -213,10 +213,10 @@ export default function Home() {
 const styles = StyleSheet.create({
   header: {
     position: 'fixed',
-    height: 46,
     display: 'flex',
     alignItems: 'center',
-    paddingTop: 4,
+    marginTop: 8,
+    marginBottom: 16,
     boxSizing: 'border-box',
   },
   header__content: {
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.Unbounded,
     fontWeight: 800,
     color: colors.primary,
-    marginLeft: 8,
+    marginLeft: 4,
     fontSize: 16,
   },
   categories: {
@@ -242,10 +242,10 @@ const styles = StyleSheet.create({
   category__title: {
     color: colors.grey_text,
     fontFamily: fonts.Unbounded,
-    fontSize: 16,
-    fontWeight: 700,
+    fontSize: 14,
+    fontWeight: 600,
     marginLeft: 16,
-    marginBottom: 16,
+    marginBottom: 8,
   },
   category__content: {
     paddingLeft: 16,
