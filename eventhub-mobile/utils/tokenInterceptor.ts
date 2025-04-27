@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ADDRESS } from '@/constants/address';
+import { useRouter } from 'expo-router';
 
 let isRefreshing = false;
 let failedQueue: any[] = [];
@@ -65,32 +66,29 @@ export const fetchWithToken = async (url: string, options: RequestInit = {}): Pr
     if (response.status === 401 && !isRefreshing) {
       isRefreshing = true;
       
-      return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
+      try {
+        const newToken = await refreshToken();
+        const newHeaders = {
+          ...options.headers,
+          'Authorization': `Bearer ${newToken}`,
+          'Content-Type': 'application/json',
+        };
         
-        refreshToken()
-          .then(newToken => {
-            const newHeaders = {
-              ...options.headers,
-              'Authorization': `Bearer ${newToken}`,
-              'Content-Type': 'application/json',
-            };
-            
-            fetch(url, { ...options, headers: newHeaders })
-              .then(resolve)
-              .catch(reject);
-            
-            processQueue(null, newToken);
-          })
-          .catch(error => {
-            console.error('Ошибка при обновлении токена:', error);
-            processQueue(error, null);
-            reject(error);
-          })
-          .finally(() => {
-            isRefreshing = false;
-          });
-      });
+        const newResponse = await fetch(url, { ...options, headers: newHeaders });
+        processQueue(null, newToken);
+        return newResponse;
+      } catch (error) {
+        console.error('Ошибка при обновлении токена:', error);
+        processQueue(error, null);
+        // Очищаем токены и перенаправляем на страницу входа
+        await AsyncStorage.removeItem('accessToken');
+        await AsyncStorage.removeItem('refreshToken');
+        const router = useRouter();
+        router.replace('/(auth)/login');
+        throw error;
+      } finally {
+        isRefreshing = false;
+      }
     }
     
     return response;

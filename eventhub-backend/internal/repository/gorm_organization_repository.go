@@ -48,7 +48,7 @@ func (r *GormOrganizationRepository) Create(name string, founderID uint) error {
 	return nil
 }
 
-func (r *GormOrganizationRepository) IsOrganizationExist(name string) (bool, error) {
+func (r *GormOrganizationRepository) IsNameTaken(name string) (bool, error) {
 	var exists OrganizationModel
 	err := r.db.Where("name = ?", name).First(&exists).Error
 
@@ -90,6 +90,10 @@ func (r *GormOrganizationRepository) JoinByCode(userID uint, code string) error 
 		return err
 	}
 
+	if userID == organization.FounderID {
+		return errors.New("user is a creator of this organization")
+	}
+
 	var existingMember OrganizationMemberModel
 	if err := r.db.Where("user_id = ? AND organization_id = ?", userID, organization.ID).First(&existingMember).Error; err == nil {
 		return errors.New("user already a member of the organization")
@@ -105,6 +109,95 @@ func (r *GormOrganizationRepository) JoinByCode(userID uint, code string) error 
 	}
 
 	return nil
+}
+
+func (r *GormOrganizationRepository) GetCreator(orgID uint) (uint, error) {
+	var organization OrganizationModel
+	err := r.db.Where("id = ?", orgID).First(&organization).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, errors.New("organization not found")
+		}
+		return 0, err
+	}
+
+	return organization.FounderID, nil
+}
+
+func (r *GormOrganizationRepository) GetEvents(orgID uint) ([]EventResponse, []EventResponse, error) {
+	var events []EventModel
+	if err := r.db.Where("organization_id = ?", orgID).Find(&events).Error; err != nil {
+		return nil, nil, err
+	}
+
+	var activeEvents, completedEvents []EventModel
+	for _, event := range events {
+		if event.Status == "active" {
+			activeEvents = append(activeEvents, event)
+		} else if event.Status == "completed" {
+			completedEvents = append(completedEvents, event)
+		}
+	}
+
+	return parseEventTime(activeEvents), parseEventTime(completedEvents), nil
+}
+
+func (r *GormOrganizationRepository) IsOrganizationExist(orgID uint) (bool, error) {
+	var exists OrganizationModel
+	err := r.db.Where("id = ?", orgID).First(&exists).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, errors.New("organization not found")
+		}
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (r *GormOrganizationRepository) GetByID(orgID, userID uint) (OrganizationModel, bool, error) {
+	var organization OrganizationModel
+	if err := r.db.Where("id = ?", orgID).First(&organization).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return OrganizationModel{}, false, errors.New("organization not found")
+		}
+		return OrganizationModel{}, false, err
+	}
+
+	return organization, userID == organization.FounderID, nil
+}
+
+func (r *GormOrganizationRepository) GetMembers(orgID uint) ([]UserAsMember, error) {
+	var users []UserModel
+	var usersResponse []UserAsMember
+	var userIDs []uint
+
+	if err := r.db.Table("organization_members").Where("organization_id = ?", orgID).Pluck("user_id", &userIDs).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New("участники не найдены")
+		}
+		return nil, err
+	}
+
+	if err := r.db.Table("users").Where("id IN (?)", userIDs).Find(&users).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, errors.New("участники не найдены")
+		}
+		return nil, err
+	}
+
+	for _, user := range users {
+		usersResponse = append(usersResponse, UserAsMember{
+			ID:        user.ID,
+			FirstName: user.FirstName,
+			LastName:  user.LastName,
+			Username:  user.Username,
+		})
+	}
+
+	return usersResponse, nil
 }
 
 func generateInviteCode() (string, error) {

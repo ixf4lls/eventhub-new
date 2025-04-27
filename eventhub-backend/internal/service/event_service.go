@@ -59,7 +59,7 @@ func (s *EventService) Quit(userID, eventID uint) error {
 	return s.eventRepo.Quit(userID, eventID)
 }
 
-func (s *EventService) Create(input domain.CreateEventInput, founderID uint) error {
+func (s *EventService) Create(input domain.CreateEventInput, creatorID, orgID uint) error {
 	today := time.Now().Truncate(24 * time.Hour)
 	if input.Date.Before(today) {
 		return errors.New("date in past")
@@ -69,5 +69,13 @@ func (s *EventService) Create(input domain.CreateEventInput, founderID uint) err
 		return errors.New("incorrect time")
 	}
 
-	return s.eventRepo.Create(input, founderID)
+	return s.eventRepo.Create(input, creatorID, orgID)
+}
+
+func (s *EventService) GetByID(eventID, userID uint) (repository.EventResponse, bool, error) {
+	return s.eventRepo.GetByID(eventID, userID)
+}
+
+func (s *EventService) IsUserJoined(userID, eventID uint) (bool, error) {
+	return s.eventRepo.IsUserJoined(userID, eventID)
 }

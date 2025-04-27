@@ -2,8 +2,8 @@ import { AuthContext } from '@/app/(auth)/AuthContext'
 import EventCard from '@/components/EventCard'
 import { colors } from '@/constants/colors'
 import { fonts } from '@/constants/fonts'
-import { Link, router } from 'expo-router'
-import { useCallback, useContext, useEffect, useState } from 'react'
+import { router } from 'expo-router'
+import { useContext, useEffect, useState } from 'react'
 import {
   Alert,
   Button,
@@ -20,6 +20,7 @@ import { ru } from 'date-fns/locale'
 import { ADDRESS } from '@/constants/address'
 import { fetchWithToken } from '@/utils/tokenInterceptor'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import EmptySpace from '@/components/EmptyState'
 
 type Event = {
   id: number
@@ -33,12 +34,9 @@ type Event = {
   end_time: string
   location: string
   creator_id: number
-  // organization_id: number;
 }
 
 export default function Home() {
-  const auth = useContext(AuthContext)
-
   const [joinedEvents, setJoinedEvents] = useState<Event[]>([])
   const [openEvents, setOpenEvents] = useState<Event[]>([])
 
@@ -86,7 +84,12 @@ export default function Home() {
           setOpenEvents([])
           return
         }
-        throw new Error(`Ошибка запроса: ${response.status}`)
+        try {
+          const errorData = await response.json()
+          throw new Error(`Ошибка запроса: ${errorData.message || response.status}`)
+        } catch (e) {
+          throw new Error(`Ошибка запроса: ${response.status}`)
+        }
       }
 
       const data = await response.json()
@@ -116,46 +119,18 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [])
 
-  const renderJoinedEvents = () => {
-    return joinedEvents.map((event) => {
+  const renderEvents = (events: Event[], type: 'open' | 'joined') => {
+    return events.map((event) => {
       return (
         <View style={styles.category__item} key={'event_' + event.id}>
           <EventCard
             id={event.id}
             title={event.title}
-            description={event.description}
             category={event.category}
-            is_public={event.is_public}
-            status={event.status}
             date={formatDate(event.date)}
             start_time={formatTime(event.start_time)}
             end_time={formatTime(event.end_time)}
             location={event.location}
-            creator_id={event.creator_id}
-            joined={true}
-          />
-        </View>
-      )
-    })
-  }
-
-  const renderOpenEvents = () => {
-    return openEvents.map((event) => {
-      return (
-        <View style={styles.category__item} key={'event_' + event.id}>
-          <EventCard
-            id={event.id}
-            title={event.title}
-            description={event.description}
-            category={event.category}
-            is_public={event.is_public}
-            status={event.status}
-            date={formatDate(event.date)}
-            start_time={formatTime(event.start_time)}
-            end_time={formatTime(event.end_time)}
-            location={event.location}
-            creator_id={event.creator_id}
-            joined={false}
           />
         </View>
       )
@@ -188,23 +163,31 @@ export default function Home() {
               showsHorizontalScrollIndicator={false}
               style={styles.category__content}
             >
-              {renderJoinedEvents()}
+              {renderEvents(joinedEvents, 'joined')}
             </ScrollView>
           </View>
         ) : null}
 
-        {openEvents.length > 0 ? (
-          <View style={styles.category}>
-            <Text style={styles.category__title}>Открытые мероприятия</Text>
-            <ScrollView
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}
-              style={styles.category__content}
-            >
-              {renderOpenEvents()}
-            </ScrollView>
+        {
+          openEvents.length > 0 ? (
+            <View style={styles.category}>
+              <Text style={styles.category__title}>Открытые мероприятия</Text>
+              <ScrollView
+                horizontal={true}
+                showsHorizontalScrollIndicator={false}
+                style={styles.category__content}
+              >
+                {renderEvents(openEvents, 'open')}
+              </ScrollView>
+
+
+            </View>
+          ) : <View style={{ marginHorizontal: 24 }}>
+            <EmptySpace message="Активных мероприятий пока нет" info="Следите за обновлениями" />
           </View>
-        ) : null}
+        }
+
+
       </ScrollView>
     </SafeAreaView>
   )

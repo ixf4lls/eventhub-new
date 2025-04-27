@@ -54,7 +54,7 @@ const Organizations = () => {
         }
       ) as Response
 
-      if (!response.ok){
+      if (!response.ok) {
         if (response.status === 401) {
           router.replace('/(auth)/login')
         }
@@ -68,55 +68,61 @@ const Organizations = () => {
 
       setJoined(joined)
       setFounded(founded)
-    } catch(error){
-      console.error('Ошибка запроса:', error)      
-    } finally{
+    } catch (error) {
+      console.error('Ошибка запроса:', error)
+    } finally {
       setRefreshing(false)
     }
   }
 
   const createOrg = async () => {
-    if (tempOrgName == ''){
+    if (tempOrgName == '') {
       Alert.alert('Ошибка', "Укажите название организации")
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
       return
     }
     try {
-      const token = await AsyncStorage.getItem('accessToken')
-      if (!token) {
-        router.replace('/(auth)/login')
-        return
-      }
       const response = await fetchWithToken(
-        'http://' + ADDRESS + '/api/organizations/create',
+        'http://' + ADDRESS + '/api/organizations',
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ "organization_name": tempOrgName }),
         }
       ) as Response
 
-      if (!response.ok){
+      if (!response.ok) {
         const errorData = await response.json()
         if (response.status === 401) {
           router.replace('/(auth)/login')
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-        } else{
+        } else {
           Alert.alert('Ошибка', errorData.message)
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
         }
         return
       }
-      
+
       setCreateOrgMenuActive(false)
       LoadOrganizations()
-    } catch(error){
-      Alert.alert('Ошибка сервера', 'Проверьте подключение.')  
+      Alert.alert(
+        "Успех! 🎉",
+        "Организация успешно создана",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Ошибка сервера', 'Проверьте подключение.')
     }
   }
 
   const joinByCode = async () => {
-    if (tempInviteCode == ''){
+    if (tempInviteCode == '') {
       Alert.alert('Ошибка', "Укажите код приглашения")
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
       return
@@ -135,22 +141,34 @@ const Organizations = () => {
         }
       ) as Response
 
-      if (!response.ok){
+      if (!response.ok) {
         const errorData = await response.json()
         if (response.status === 401) {
           router.replace('/(auth)/login')
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-        } else{
+        } else {
           Alert.alert('Ошибка', errorData.message)
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
         }
         return
       }
-      
+
       setJoinByCodeMenuActive(false)
       LoadOrganizations()
-    } catch(error){
-      Alert.alert('Ошибка сервера', 'Проверьте подключение.')  
+      Alert.alert(
+        "Успех! 🎉",
+        "Вы успешно присоединились к организации",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      Alert.alert('Ошибка сервера', 'Проверьте подключение.')
     }
   }
 
@@ -160,12 +178,12 @@ const Organizations = () => {
         visible={createOrgMenuActive}
         transparent={true}
         animationType="fade"
-        onRequestClose={() => setJoinByCodeMenuActive(false)}
+        onRequestClose={() => setCreateOrgMenuActive(false)}
       >
         <View style={styles.menu}>
           <Text style={styles.menu__title}>Как будет называться ваша организация?</Text>
-          <InputField value={tempOrgName} onChangeText={(text) => setTempOrgName(text)} placeholder="Введите название организации"  secureTextEntry={false}/>
-          <View style={{width:"100%", marginBottom:8, marginTop: 16}}>
+          <InputField value={tempOrgName} onChangeText={(text) => setTempOrgName(text)} placeholder="Введите название организации" secureTextEntry={false} />
+          <View style={{ width: "100%", marginBottom: 8, marginTop: 16 }}>
             <CustomButton onPress={() => createOrg()} title="Создать организацию" type="action" fill="solid" />
           </View>
           <CustomButton onPress={() => setCreateOrgMenuActive(false)} title="Назад" type="action" fill="bordered" />
@@ -185,8 +203,8 @@ const Organizations = () => {
       >
         <View style={styles.menu}>
           <Text style={styles.menu__title}>Присоединиться по коду</Text>
-          <InputField value={tempInviteCode} onChangeText={(text) => setTempInviteCode(text.toUpperCase())} placeholder="Введите код приглашения"  secureTextEntry={false}/>
-          <View style={{width:"100%", marginBottom:8, marginTop: 16}}>
+          <InputField value={tempInviteCode} onChangeText={(text) => setTempInviteCode(text.toUpperCase())} placeholder="Введите код приглашения" secureTextEntry={false} />
+          <View style={{ width: "100%", marginBottom: 8, marginTop: 16 }}>
             <CustomButton onPress={() => joinByCode()} title="Присоединиться" type="action" fill="solid" />
           </View>
           <CustomButton onPress={() => setJoinByCodeMenuActive(false)} title="Назад" type="action" fill="bordered" />
@@ -196,12 +214,12 @@ const Organizations = () => {
     )
   }
 
-  const renderNoOrgs = () =>{
+  const renderNoOrgs = () => {
     return (
       <View style={styles.welcome}>
         <Text style={styles.welcome__text}>👋 Привет! Ты пока не в организации, но это легко исправить!</Text>
-        <View style={{marginBottom: 8}}><CustomButton onPress={() => setJoinByCodeMenuActive(true)} title={"Присоединиться по коду"} type='action' fill='solid'/></View>
-        <CustomButton onPress={() => setCreateOrgMenuActive(true)} title={"Создать организацию"} type='action' fill='bordered'/>
+        <View style={{ marginBottom: 8 }}><CustomButton onPress={() => setJoinByCodeMenuActive(true)} title={"Присоединиться по коду"} type='action' fill='solid' /></View>
+        <CustomButton onPress={() => setCreateOrgMenuActive(true)} title={"Создать организацию"} type='action' fill='bordered' />
       </View>
     )
   }
@@ -211,14 +229,14 @@ const Organizations = () => {
       <View>
         <View>
           {founded.length > 0 && (
-            <View style={{marginBottom: 16}}>
+            <View style={{ marginBottom: 16 }}>
               <Text style={styles.sectionTitle}>Вы управляете</Text>
               {founded.map(org => (
-                <OrganizationCard 
+                <OrganizationCard
                   key={org.id}
-                  id={org.id} 
-                  name={org.name} 
-                  founder_id={org.founder_id} 
+                  id={org.id}
+                  name={org.name}
+                  founder_id={org.founder_id}
                   invite_code={org.invite_code}
                 />
               ))}
@@ -228,11 +246,11 @@ const Organizations = () => {
             <View>
               <Text style={styles.sectionTitle}>Вы участник</Text>
               {joined.map(org => (
-                <OrganizationCard 
+                <OrganizationCard
                   key={org.id}
-                  id={org.id} 
-                  name={org.name} 
-                  founder_id={org.founder_id} 
+                  id={org.id}
+                  name={org.name}
+                  founder_id={org.founder_id}
                   invite_code={org.invite_code}
                 />
               ))}
@@ -240,8 +258,8 @@ const Organizations = () => {
           )}
         </View>
         <View style={styles.orgsActions}>
-          <View style={{marginBottom: 8}}><CustomButton onPress={() => setJoinByCodeMenuActive(true)} title={"Присоединиться по коду"} type='action' fill='solid'/></View>
-          <CustomButton onPress={() => setCreateOrgMenuActive(true)} title={"Создать организацию"} type='action' fill='bordered'/>
+          <View style={{ marginBottom: 8 }}><CustomButton onPress={() => setJoinByCodeMenuActive(true)} title={"Присоединиться по коду"} type='action' fill='solid' /></View>
+          <CustomButton onPress={() => setCreateOrgMenuActive(true)} title={"Создать организацию"} type='action' fill='bordered' />
         </View>
       </View>
     )
@@ -257,14 +275,14 @@ const Organizations = () => {
   }, [])
 
   return (
-    <SafeAreaView style={{backgroundColor: "#ffffff", flex:1}}>
+    <SafeAreaView style={{ backgroundColor: "#ffffff", height: "100%" }}>
       {createOrgMenuActive ? renderCreateOrgMenu() : null}
       {joinByCodeMenuActive ? renderJoinOrgMenu() : null}
       <View style={styles.header}><Text style={styles.header__text}>Организации</Text></View>
       <ScrollView
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={LoadOrganizations} />
-      }
+        }
       >
         {(joined.length === 0 && founded.length === 0) ? renderNoOrgs() : renderOrgs()}
         {/* <CustomNotification type='success' message="Вы присоединились к организации" /> */}
@@ -274,30 +292,30 @@ const Organizations = () => {
 };
 
 const styles = StyleSheet.create({
-  overlay:{
+  overlay: {
     position: "absolute",
     top: 0,
-    left:0,
+    left: 0,
     width: "100%",
     height: "100%",
-    backgroundColor:"#1F2024",
+    backgroundColor: "#1F2024",
     opacity: 0.85,
     zIndex: 5
   },
-  menu:{
-    marginHorizontal:24,
+  menu: {
+    marginHorizontal: 24,
     backgroundColor: "#ffffff",
-    display:"flex",
+    display: "flex",
     justifyContent: "center",
-    alignItems:"center",
-    marginTop:"auto",
+    alignItems: "center",
+    marginTop: "auto",
     marginBottom: "auto",
     borderRadius: 16,
     paddingVertical: 16,
-    paddingHorizontal:20,
+    paddingHorizontal: 20,
     zIndex: 6
   },
-  menu__title:{
+  menu__title: {
     fontFamily: fonts.Unbounded,
     color: colors.black,
     fontWeight: 700,
@@ -307,34 +325,34 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 8
   },
-  menu__input:{},
-  header:{
-    display:"flex",
-    position:"fixed",
+  menu__input: {},
+  header: {
+    display: "flex",
+    position: "fixed",
     width: "100%",
     marginTop: 8,
     marginBottom: 16,
     justifyContent: "center",
-    alignItems:"center"
+    alignItems: "center"
   },
-  header__text:{
+  header__text: {
     fontFamily: fonts.Unbounded,
     color: colors.black,
     fontWeight: 600,
-    fontSize:16
+    fontSize: 16
   },
-  welcome:{
+  welcome: {
     backgroundColor: "#EAF2FF",
     marginHorizontal: 16,
     paddingHorizontal: 16,
     paddingVertical: 16,
     borderRadius: 16,
-    marginBottom: 32
+    marginBottom: 32,
   },
-  welcome__text:{
+  welcome__text: {
     fontWeight: 400,
     fontFamily: fonts.Unbounded,
-    fontSize:16,
+    fontSize: 16,
     color: colors.black,
     marginBottom: 16
   },

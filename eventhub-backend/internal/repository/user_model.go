@@ -13,3 +13,10 @@ type UserModel struct {
 func (UserModel) TableName() string {
 	return "users"
 }
+
+type UserAsMember struct {
+	ID        uint   `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Username  string `json:"username"`
+}

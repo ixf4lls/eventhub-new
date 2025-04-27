@@ -6,49 +6,29 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 type EventCardProps = {
   id: number
   title: string
-  description: string
   category: string
-  is_public: boolean
-  status: string
   date: string
   start_time: string
   end_time: string
   location: string
-  creator_id: number
-  joined: boolean
 }
 
 const EventCard = ({
   id,
   title,
-  description,
   category,
-  is_public,
-  status,
   date,
   start_time,
   end_time,
   location,
-  creator_id,
-  joined,
 }: EventCardProps) => {
   return (
     <TouchableOpacity
       onPress={() =>
         router.push({
-          pathname: '/modal',
+          pathname: '/event_modal',
           params: {
             id: id,
-            is_public: 'true',
-            title: title,
-            category: category,
-            description: description,
-            date: date,
-            start_time: start_time,
-            end_time: end_time,
-            location: location,
-            creator_id: creator_id,
-            joined: joined ? 'true' : 'false',
           },
         })
       }
@@ -93,7 +73,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FE',
     overflow: 'hidden',
     // boxShadow:
-      // 'rgba(14, 63, 126, 0.03) 0px 0px 0px 1px, rgba(42, 51, 69, 0.03) 0px 1px 1px -0.5px, rgba(42, 51, 70, 0.03) 0px 3px 3px -1.5px, rgba(42, 51, 70, 0.03) 0px 6px 6px -3px, rgba(14, 63, 126, 0.03) 0px 12px 12px -6px, rgba(14, 63, 126, 0.03) 0px 24px 24px -12px',
+    // 'rgba(14, 63, 126, 0.03) 0px 0px 0px 1px, rgba(42, 51, 69, 0.03) 0px 1px 1px -0.5px, rgba(42, 51, 70, 0.03) 0px 3px 3px -1.5px, rgba(42, 51, 70, 0.03) 0px 6px 6px -3px, rgba(14, 63, 126, 0.03) 0px 12px 12px -6px, rgba(14, 63, 126, 0.03) 0px 24px 24px -12px',
     marginBottom: 32,
   },
   card__content: {

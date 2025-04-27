@@ -51,15 +51,21 @@ func main() {
 	auth := api.Group("", authMW.AuthRequired)
 
 	events := auth.Group("/events")
-	events.GET("", eventHandler.GetAll)                 // GET    /api/events
-	events.POST("/:event_id/join", eventHandler.Join)   // POST   /api/events/:id/join
-	events.DELETE("/:event_id/quit", eventHandler.Quit) // DELETE /api/events/:id/quit
-	events.POST("/create", eventHandler.Create)         // POST /api/events/create
+	events.GET("", eventHandler.GetAll)           // GET    /api/events
+	events.GET("/:id", eventHandler.GetByID)      // GET /api/events/:id
+	events.POST("/:id/join", eventHandler.Join)   // POST   /api/events/:id/join
+	events.DELETE("/:id/quit", eventHandler.Quit) // DELETE /api/events/:id/quit
 
 	organizations := auth.Group("/organizations")
 	organizations.GET("", organizationHandler.GetAll)                 // GET  /api/organizations
-	organizations.POST("/create", organizationHandler.Create)         // POST /api/organizations/create
+	organizations.GET("/:id/events", organizationHandler.GetEvents)   // GET /api/organizations/:id/events
+	organizations.GET("/:id", organizationHandler.GetByID)            // GET /api/organizations/:id
+	organizations.GET("/:id/members", organizationHandler.GetMembers) // GET /api/organizations/:id/members
+	organizations.POST("", organizationHandler.Create)                // POST /api/organizations/
 	organizations.POST("/join/:code", organizationHandler.JoinByCode) // POST /api/organizations/join/:code
+
+	orgCreator := organizations.Group("/:id", authMW.IsOrganizationCreator(organizationService))
+	orgCreator.POST("/events", eventHandler.Create) // POST /api/organizations/:id/events
 
 	e.Start(":3000")
 }

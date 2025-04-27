@@ -17,14 +17,14 @@ type Event struct {
 }
 
 type CreateEventInput struct {
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
-	Category    string    `json:"category"`
-	Status      string    `json:"status"`
-	Location    string    `json:"location"`
-	IsPublic    bool      `json:"is_public"`
-	CreatorID   uint      `json:"creator_id"`
-	Date        time.Time `json:"date"`
-	StartTime   time.Time `json:"start_time"`
-	EndTime     time.Time `json:"end_time"`
+	Title          string    `json:"title"`
+	Description    string    `json:"description"`
+	Category       string    `json:"category"`
+	Location       string    `json:"location"`
+	IsPublic       bool      `json:"is_public"`
+	CreatorID      uint      `json:"creator_id"`
+	OrganizationID uint      `json:"organization_id"`
+	Date           time.Time `json:"date"`
+	StartTime      time.Time `json:"start_time"`
+	EndTime        time.Time `json:"end_time"`
 }

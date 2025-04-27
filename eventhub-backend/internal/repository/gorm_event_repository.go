@@ -79,21 +79,26 @@ func (r *GormEventRepository) Quit(userID, eventID uint) error {
 	return nil
 }
 
-func (r *GormEventRepository) Create(input domain.CreateEventInput, founderID uint) error {
+func (r *GormEventRepository) Create(input domain.CreateEventInput, creatorID, orgID uint) error {
 	event := EventModel{
-		Title:       input.Title,
-		Description: input.Description,
-		Category:    input.Category,
-		Status:      input.Status,
-		Location:    input.Location,
-		IsPublic:    input.IsPublic,
-		CreatorId:   founderID,
-		Date:        input.Date,
-		StartTime:   input.StartTime,
-		EndTime:     input.EndTime,
+		Title:          input.Title,
+		Description:    input.Description,
+		Category:       input.Category,
+		Status:         "active",
+		Location:       input.Location,
+		IsPublic:       input.IsPublic,
+		CreatorId:      creatorID,
+		Date:           input.Date,
+		StartTime:      input.StartTime,
+		EndTime:        input.EndTime,
+		OrganizationId: orgID,
 	}
 
-	return r.db.Create(&event).Error
+	if err := r.db.Create(&event).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *GormEventRepository) IsEventExist(eventID uint) (bool, error) {
@@ -117,4 +122,25 @@ func (r *GormEventRepository) IsUserJoined(userID, eventID uint) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (r *GormEventRepository) GetByID(eventID, userID uint) (EventResponse, bool, error) {
+	var event EventModel
+	if err := r.db.Where("id = ?", eventID).First(&event).Error; err != nil {
+		return EventResponse{}, false, err
+	}
+	return EventResponse{
+		ID:             event.ID,
+		Title:          event.Title,
+		Description:    event.Description,
+		Category:       event.Category,
+		IsPublic:       event.IsPublic,
+		Status:         event.Status,
+		Date:           event.Date.Format("2006-01-02"),
+		StartTime:      event.StartTime.Format("15:04:05"),
+		EndTime:        event.EndTime.Format("15:04:05"),
+		Location:       event.Location,
+		CreatorId:      event.CreatorId,
+		OrganizationId: event.OrganizationId,
+	}, userID == event.CreatorId, nil
 }

@@ -1,7 +1,5 @@
-import { NavigationContainer } from "@react-navigation/native";
-import { Slot, Stack } from "expo-router";
+import { Stack, useLocalSearchParams } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { useContext } from "react";
 import { AuthProvider } from "./(auth)/AuthContext";
 import { enableScreens } from "react-native-screens";
 
@@ -18,8 +16,20 @@ export default function RootLayout() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(root)" options={{ headerShown: false }} />
         <Stack.Screen
-          name="modal"
+          name="event_modal"
           options={{ presentation: "modal", headerShown: false }}
+        />
+        <Stack.Screen
+          name="organization_modal" 
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="event_creation_modal" 
+          options={{
+            headerShown: false,
+          }}
         />
       </Stack>
     </AuthProvider>

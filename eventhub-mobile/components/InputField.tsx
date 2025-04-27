@@ -1,5 +1,5 @@
 import { colors } from "@/constants/colors";
-import { useState } from "react";
+import { memo, useRef, useState } from "react";
 import {
   StyleSheet,
   TextInput,
@@ -19,7 +19,7 @@ type InputFieldProps = {
   props?: any;
 };
 
-const InputField = ({
+const InputField = memo(({
   value,
   onChangeText,
   placeholder,
@@ -27,42 +27,46 @@ const InputField = ({
   secureTextEntry,
   ...props
 }: InputFieldProps) => {
-  const [isPasswordVisible, setIsPasswordVisible] = useState(secureTextEntry);
+  const [localValue, setLocalValue] = useState(value);
+
+  const handleChange = (text: string) => {
+    setLocalValue(text);
+    onChangeText(text);
+  };
 
   return (
     <View style={styles.container}>
       <TextInput
         style={[styles.input, isIncorrect && { borderColor: colors.error }]}
-        value={value}
-        onChangeText={onChangeText}
+        value={localValue}
+        onChangeText={handleChange}
         placeholder={placeholder}
         placeholderTextColor={colors.form_text}
-        secureTextEntry={isPasswordVisible}
+        secureTextEntry={secureTextEntry}
+        autoCapitalize="none"
+        autoCorrect={false}
         {...props}
-      ></TextInput>
-      {secureTextEntry ? (
+      />
+      {secureTextEntry && (
         <TouchableOpacity
           onPress={() => {
-            setIsPasswordVisible(!isPasswordVisible);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
           }}
           style={styles.passwordVisibility}
         >
           <Image
             source={
-              isPasswordVisible
+              secureTextEntry
                 ? require("../assets/icons/password_hide.png")
                 : require("../assets/icons/password_show.png")
             }
             style={{ width: 16, height: 16 }}
           />
         </TouchableOpacity>
-      ) : (
-        <View></View>
       )}
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {
@@ -70,7 +74,6 @@ const styles = StyleSheet.create({
   },
   input: {
     width: "100%",
-    height: 48,
     color: colors.form_text,
     borderColor: colors.form_border,
     borderWidth: 1,
