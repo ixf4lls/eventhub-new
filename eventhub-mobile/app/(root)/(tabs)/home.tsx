@@ -21,6 +21,7 @@ import { ADDRESS } from '@/constants/address'
 import { fetchWithToken } from '@/utils/tokenInterceptor'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import EmptySpace from '@/components/EmptyState'
+import RenderCategory from '@/components/RenderCategory'
 
 type Event = {
   id: number
@@ -119,7 +120,7 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [])
 
-  const renderEvents = (events: Event[], type: 'open' | 'joined') => {
+  const renderEvents = (events: Event[]) => {
     return events.map((event) => {
       return (
         <View style={styles.category__item} key={'event_' + event.id}>
@@ -155,39 +156,13 @@ export default function Home() {
           <RefreshControl refreshing={refreshing} onRefresh={LoadEvents} />
         }
       >
-        {joinedEvents.length > 0 ? (
-          <View style={styles.category}>
-            <Text style={styles.category__title}>Вы участвуете</Text>
-            <ScrollView
-              horizontal={true}
-              showsHorizontalScrollIndicator={false}
-              style={styles.category__content}
-            >
-              {renderEvents(joinedEvents, 'joined')}
-            </ScrollView>
-          </View>
-        ) : null}
-
         {
-          openEvents.length > 0 ? (
-            <View style={styles.category}>
-              <Text style={styles.category__title}>Открытые мероприятия</Text>
-              <ScrollView
-                horizontal={true}
-                showsHorizontalScrollIndicator={false}
-                style={styles.category__content}
-              >
-                {renderEvents(openEvents, 'open')}
-              </ScrollView>
-
-
-            </View>
-          ) : <View style={{ marginHorizontal: 24 }}>
-            <EmptySpace message="Активных мероприятий пока нет" info="Следите за обновлениями" />
-          </View>
+          RenderCategory({ events: joinedEvents, title: 'Вы участвуете', showEmpty: false, emptyMessage: '', emptyInfo: '' })
         }
 
-
+        {
+          RenderCategory({ events: openEvents, title: 'Актуальные мероприятия', showEmpty: true, emptyMessage: 'Актуальных мероприятий пока нет', emptyInfo: "Следите за обновлениями" })
+        }
       </ScrollView>
     </SafeAreaView>
   )
@@ -231,9 +206,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   category__content: {
-    paddingLeft: 16,
+    paddingHorizontal: 16,
   },
   category__item: {
-    marginRight: 12,
+    marginBottom: 12,
   },
 })

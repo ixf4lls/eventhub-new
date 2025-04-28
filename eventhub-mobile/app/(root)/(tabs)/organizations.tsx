@@ -137,7 +137,6 @@ const Organizations = () => {
         'http://' + ADDRESS + '/api/organizations/join/' + tempInviteCode.toUpperCase(),
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
         }
       ) as Response
 

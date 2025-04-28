@@ -12,6 +12,7 @@ import { ru } from 'date-fns/locale'
 import EmptySpace from "@/components/EmptyState"
 import * as Clipboard from 'expo-clipboard';
 import CustomButton from "@/components/CustomButton"
+import RenderCategory from "@/components/RenderCategory"
 
 type Organization = {
   id: number,
@@ -274,35 +275,12 @@ const ModalScreen = () => {
               </View>
               : null
           }
-          <View style={styles.category}>
-            <Text style={styles.category__title}>Актуальные</Text>
-            {
-              activeEvents.length == 0
-                ? <View style={{ marginHorizontal: 16 }}>
-                  <EmptySpace message="Актуальных мероприятий пока нет" info="Следите за обновлениями" />
-                </View>
-                : <ScrollView
-                  horizontal={true}
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.category__content}
-                >
-                  {renderEvents(activeEvents)}
-                </ScrollView>
-            }
-          </View>
+          {
+            RenderCategory({ events: activeEvents, title: 'Актуальные', showEmpty: true, emptyMessage: "Мероприятий пока нет", emptyInfo: "Вы ыможете создать первое по кнопке выше" })
+          }
 
-          {completedEvents.length != 0
-            ? <View style={styles.category}>
-              <Text style={styles.category__title}>Завершенные</Text>
-              <ScrollView
-                horizontal={true}
-                showsHorizontalScrollIndicator={false}
-                style={styles.category__content}
-              >
-                {renderEvents(completedEvents)}
-              </ScrollView>
-            </View>
-            : null
+          {
+            RenderCategory({ events: completedEvents, title: 'Завершенные', showEmpty: false, emptyMessage: '', emptyInfo: '' })
           }
         </View>
 
@@ -385,7 +363,6 @@ const styles = StyleSheet.create({
   categories: {
     width: '100%',
     marginTop: 24,
-    marginBottom: 32,
   },
   category: {
   },
@@ -399,6 +376,7 @@ const styles = StyleSheet.create({
   },
   category__content: {
     paddingLeft: 16,
+    gap: 8
   },
   category__item: {
     marginRight: 12,

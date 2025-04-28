@@ -34,11 +34,14 @@ const EventCard = ({
       }
       style={styles.card}
     >
-      <Image
-        source={require('../assets/images/blank_image_card.png')}
-        style={{ width: '100%', height: 120 }}
-        resizeMode="contain"
-      />
+
+      <View style={styles.image_container}>
+        <Image
+          source={require('../assets/images/blank_image_card.png')}
+          resizeMode="cover"
+          style={styles.image}
+        />
+      </View>
       <View style={styles.card__content}>
         <View style={styles.content__date}>
           <View style={styles.date__day}>
@@ -50,8 +53,10 @@ const EventCard = ({
             </Text>
           </View>
         </View>
-        <Text style={styles.content__title}>{title}</Text>
-        <Text style={styles.content__category}>{category}</Text>
+        <View style={{width: "100%"}}>
+          <Text style={styles.content__title}>{title}</Text>
+          <Text style={styles.content__category}>{category}</Text>
+        </View>
         <View style={styles.content__place}>
           <Image
             source={require('../assets/icons/location.png')}
@@ -67,19 +72,35 @@ const EventCard = ({
 
 const styles = StyleSheet.create({
   card: {
-    width: 250,
-    height: 282,
+    width: "100%",
     borderRadius: 16,
     backgroundColor: '#F8F9FE',
     overflow: 'hidden',
+    display: "flex",
+    flexDirection: "row",
+    maxHeight: 200,
+    position: "relative"
     // boxShadow:
     // 'rgba(14, 63, 126, 0.03) 0px 0px 0px 1px, rgba(42, 51, 69, 0.03) 0px 1px 1px -0.5px, rgba(42, 51, 70, 0.03) 0px 3px 3px -1.5px, rgba(42, 51, 70, 0.03) 0px 6px 6px -3px, rgba(14, 63, 126, 0.03) 0px 12px 12px -6px, rgba(14, 63, 126, 0.03) 0px 24px 24px -12px',
-    marginBottom: 32,
+  },
+  image_container: {
+    width: 135,
+    position: 'relative', 
+  },
+  image: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: '100%',
+    height: '100%',
   },
   card__content: {
     padding: 16,
     boxSizing: 'border-box',
     flexGrow: 1,
+    flexShrink: 1
   },
   content__date: {
     display: 'flex',
@@ -121,6 +142,8 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: colors.black,
     fontSize: 14,
+    flexShrink: 1,
+    flexWrap: "wrap"
   },
   content__category: {
     fontWeight: 600,
@@ -130,7 +153,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   content__place: {
-    marginTop: 'auto',
+    marginTop: 16,
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
