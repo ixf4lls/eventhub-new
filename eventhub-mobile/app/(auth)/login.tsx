@@ -13,7 +13,7 @@ import {
 } from 'react-native'
 import { View, ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { AuthContext } from './AuthContext'
+import { AuthContext } from '../../src/context/AuthContext'
 import { fonts } from '@/constants/fonts'
 import * as Haptics from 'expo-haptics'
 import CustomButton from '@/components/CustomButton'
@@ -58,7 +58,7 @@ const Login = () => {
       const data = await response.json()
       if (auth) {
         auth.login(data.access_token, data.refresh_token)
-        router.replace('/(root)/(tabs)/home')
+        router.replace('../(root)/(tabs)/home')
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       }
     } catch (error) {
@@ -110,7 +110,7 @@ const Login = () => {
               <Text style={styles.registration__title}>
                 Нет аккаунта?{' '}
                 <Link
-                  href="/(auth)/registration"
+                  href="../(auth)/registration"
                   style={styles.registration__link}
                 >
                   <Text>Зарегистрироваться</Text>

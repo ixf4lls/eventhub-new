@@ -25,6 +25,6 @@ type CreateEventInput struct {
 	CreatorID      uint      `json:"creator_id"`
 	OrganizationID uint      `json:"organization_id"`
 	Date           time.Time `json:"date"`
-	StartTime      time.Time `json:"start_time"`
-	EndTime        time.Time `json:"end_time"`
+	StartTime      string    `json:"start_time"`
+	EndTime        string    `json:"end_time"`
 }

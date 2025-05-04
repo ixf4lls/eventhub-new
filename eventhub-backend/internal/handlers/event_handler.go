@@ -131,3 +131,18 @@ func (h *EventHandler) GetByID(c echo.Context) error {
 		"is_joined":  isJoined,
 	})
 }
+
+func (h *EventHandler) Delete(c echo.Context) error {
+	userID := c.Get("userID").(uint)
+	eventIDstr := c.Param("id")
+	eventID, err := strconv.ParseUint(eventIDstr, 10, 64)
+	if err != nil || eventIDstr == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Некорректный запрос")
+	}
+
+	if err := h.eventService.Delete(userID, uint(eventID)); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Ошибка при удалении мероприятия")
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}

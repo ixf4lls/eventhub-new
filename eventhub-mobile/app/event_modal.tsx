@@ -118,7 +118,6 @@ const ModalScreen = () => {
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       setUserJoined(true)
-      router.push('/(root)/(tabs)/home')
     } catch (error) {
       Alert.alert('Ошибка сервера', 'Проверьте подключение.')
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
@@ -143,7 +142,6 @@ const ModalScreen = () => {
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       setUserJoined(false)
-      router.push('/(root)/(tabs)/home')
     } catch (error) {
       Alert.alert('Ошибка сервера', 'Проверьте подключение.')
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
@@ -157,7 +155,7 @@ const ModalScreen = () => {
       [
         {
           text: "Нет, оставить все как есть",
-          onPress: () => {},
+          onPress: () => { },
           style: "cancel"
         },
         {
@@ -171,7 +169,10 @@ const ModalScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#ffffff' }}>
-      <TouchableOpacity onPress={() => router.back()} style={styles.close}>
+      <TouchableOpacity
+        onPress={() => router.back()}
+        style={styles.close}
+      >
         <Image
           source={require('../assets/icons/close.png')}
           style={{ height: 16, width: 16 }}
@@ -334,9 +335,9 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingVertical: 6,
     paddingHorizontal: 8,
-    backgroundColor:"#CA3CFF",
-    justifyContent:'center',
-    alignItems:'center',
+    backgroundColor: "#CA3CFF",
+    justifyContent: 'center',
+    alignItems: 'center',
     width: 'auto',
   },
   creator__text: {

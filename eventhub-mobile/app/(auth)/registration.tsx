@@ -14,7 +14,7 @@ import {
 import { ScrollView } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { router, useRouter } from 'expo-router'
-import { AuthContext } from './AuthContext'
+import { AuthContext } from '../../src/context/AuthContext'
 import { fonts } from '@/constants/fonts'
 import * as Haptics from 'expo-haptics'
 import CustomButton from '@/components/CustomButton'
@@ -66,7 +66,7 @@ const SignIn = () => {
       const data = await response.json()
       if (response.ok && auth) {
         auth.login(data.access_token, data.refresh_token)
-        router.replace('/(root)/(tabs)/home')
+        router.replace('../(root)/(tabs)/home')
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       } else {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)

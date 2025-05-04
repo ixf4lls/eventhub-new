@@ -65,7 +65,11 @@ func (s *EventService) Create(input domain.CreateEventInput, creatorID, orgID ui
 		return errors.New("date in past")
 	}
 
-	if input.StartTime.After(input.EndTime) {
+	inputStartTime, _ := time.Parse("15:04:05", input.StartTime)
+
+	inputEndTime, _ := time.Parse("15:04:05", input.EndTime)
+
+	if inputStartTime.After(inputEndTime) {
 		return errors.New("incorrect time")
 	}
 
@@ -78,4 +82,21 @@ func (s *EventService) GetByID(eventID, userID uint) (repository.EventResponse, 
 
 func (s *EventService) IsUserJoined(userID, eventID uint) (bool, error) {
 	return s.eventRepo.IsUserJoined(userID, eventID)
+}
+
+func (s *EventService) IsUserCreator(userID, eventID uint) (bool, error) {
+	return s.eventRepo.IsUserCreator(userID, eventID)
+}
+
+func (s *EventService) Delete(userID, eventID uint) error {
+	isCreator, err := s.eventRepo.IsUserCreator(userID, eventID)
+	if err != nil {
+		return err
+	}
+
+	if !isCreator {
+		return errors.New("access denied")
+	}
+
+	return s.eventRepo.Delete(eventID)
 }

@@ -1,9 +1,9 @@
-import { AuthContext } from '@/app/(auth)/AuthContext'
+import { AuthContext } from '@/src/context/AuthContext'
 import EventCard from '@/components/EventCard'
 import { colors } from '@/constants/colors'
 import { fonts } from '@/constants/fonts'
 import { router } from 'expo-router'
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import {
   Alert,
   Button,
@@ -22,6 +22,8 @@ import { fetchWithToken } from '@/utils/tokenInterceptor'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import EmptySpace from '@/components/EmptyState'
 import RenderCategory from '@/components/RenderCategory'
+import Swiper from 'react-native-swiper'
+import RenderCategoryFull from '@/components/RenderCategoryFull'
 
 type Event = {
   id: number
@@ -45,19 +47,9 @@ export default function Home() {
 
   const [refreshing, setRefreshing] = useState(false)
 
-  const formatDate = (date: string) => {
-    const parsedDate = parseISO(date)
-    const formattedDate = format(parsedDate, 'd MMMM', {
-      locale: ru,
-    }).toUpperCase()
+  const [activeIndex, setActiveIndex] = useState(0)
 
-    return formattedDate
-  }
-
-  const formatTime = (time: string) => {
-    if (!time) return '00:00'
-    return time.slice(0, 5)
-  }
+  const swiperRef = useRef<Swiper>(null)
 
   const LoadEvents = async () => {
     setRefreshing(true)
@@ -120,24 +112,6 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [])
 
-  const renderEvents = (events: Event[]) => {
-    return events.map((event) => {
-      return (
-        <View style={styles.category__item} key={'event_' + event.id}>
-          <EventCard
-            id={event.id}
-            title={event.title}
-            category={event.category}
-            date={formatDate(event.date)}
-            start_time={formatTime(event.start_time)}
-            end_time={formatTime(event.end_time)}
-            location={event.location}
-          />
-        </View>
-      )
-    })
-  }
-
   return (
     <SafeAreaView style={{ backgroundColor: '#ffffff' }}>
       <View style={styles.header}>
@@ -150,20 +124,40 @@ export default function Home() {
           <Text style={styles.header__title}>EVENTHUB</Text>
         </View>
       </View>
-      <ScrollView
-        style={styles.categories}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={LoadEvents} />
-        }
-      >
-        {
-          RenderCategory({ events: joinedEvents, title: 'Вы участвуете', showEmpty: false, emptyMessage: '', emptyInfo: '' })
-        }
+      <View style={styles.swiper}>
+        <View style={styles.swiper__header}>
+          <Text style={[styles.swiper__text, activeIndex == 0 ? { color: colors.primary, fontWeight: 600 } : { color: colors.grey_text, fontWeight: 400 }]}>Актуальные</Text>
+          <Text style={[styles.swiper__text, activeIndex == 1 ? { color: colors.primary, fontWeight: 600 } : { color: colors.grey_text, fontWeight: 400 }]}>Вы участвуете</Text>
+        </View>
+        <Swiper
+          ref={swiperRef}
+          loop={false}
+          scrollEnabled={true}
+          onIndexChanged={(index) => setActiveIndex(index)}
+        >
+          <ScrollView
+            style={styles.categories}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={LoadEvents} />
+            }
+          >
+            {
+              RenderCategoryFull({ events: openEvents, emptyMessage: 'Актуальных мероприятий пока нет', emptyInfo: "Следите за обновлениями" })
+            }
+          </ScrollView>
 
-        {
-          RenderCategory({ events: openEvents, title: 'Актуальные мероприятия', showEmpty: true, emptyMessage: 'Актуальных мероприятий пока нет', emptyInfo: "Следите за обновлениями" })
-        }
-      </ScrollView>
+          <ScrollView
+            style={styles.categories}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={LoadEvents} />
+            }
+          >
+            {
+              RenderCategoryFull({ events: joinedEvents, emptyMessage: 'Вы пока не участвуете ни в одном мероприятии', emptyInfo: '' })
+            }
+          </ScrollView>
+        </Swiper>
+      </View>
     </SafeAreaView>
   )
 }
@@ -211,4 +205,22 @@ const styles = StyleSheet.create({
   category__item: {
     marginBottom: 12,
   },
+  swiper: {
+    height: "100%"
+  },
+  swiper__header: {
+    width: "100%",
+    display: "flex",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 24,
+    paddingTop: 4,
+    paddingBottom: 16
+  },
+  swiper__text: {
+    fontFamily: fonts.Unbounded,
+    fontSize: 12,
+    fontWeight: 500
+  }
 })

@@ -19,7 +19,7 @@ const Onboarding = () => {
       <SafeAreaView style={styles.skip}>
         <Pressable
           onPress={() => {
-            router.replace('/(auth)/login')
+            router.replace('../(auth)/login')
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
           }}
           hitSlop={10}
@@ -47,7 +47,7 @@ const Onboarding = () => {
           title={isLastSlide ? 'Начать!' : 'Далее'}
           onPress={() => {
             isLastSlide
-              ? router.replace('/(auth)/login')
+              ? router.replace('../(auth)/login')
               : swiperRef.current?.scrollBy(1)
           }}
           type={'action'}

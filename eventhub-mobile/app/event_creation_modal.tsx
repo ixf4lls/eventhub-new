@@ -133,6 +133,10 @@ const ModalScreen = () => {
 
     const createEvent = async () => {
         try {
+            const formattedDate = tempEvent.date ? tempEvent.date.toISOString() : null; 
+            const formattedStartTime = tempEvent.start_time ? tempEvent.start_time.toTimeString().split(' ')[0] : null;
+            const formattedEndTime = tempEvent.end_time ? tempEvent.end_time.toTimeString().split(' ')[0] : null; 
+
             const response = await fetchWithToken(
                 'http://' + ADDRESS + '/api/organizations/' + org_id + '/events',
                 {
@@ -143,9 +147,9 @@ const ModalScreen = () => {
                         category: tempEvent.category,
                         is_public: tempEvent.is_public,
                         location: tempEvent.location,
-                        date: tempEvent.date?.toISOString(),
-                        start_time: tempEvent.start_time?.toISOString(),
-                        end_time: tempEvent.end_time?.toISOString()
+                        date: formattedDate,
+                        start_time: formattedStartTime,
+                        end_time: formattedEndTime
                     })
                 }
             ) as Response

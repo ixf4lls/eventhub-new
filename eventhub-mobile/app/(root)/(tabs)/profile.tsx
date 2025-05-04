@@ -1,4 +1,4 @@
-import { AuthContext } from '@/app/(auth)/AuthContext'
+import { AuthContext } from '@/src/context/AuthContext'
 import { ADDRESS } from '@/constants/address'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { router } from 'expo-router'

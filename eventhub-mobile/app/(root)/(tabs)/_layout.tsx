@@ -22,7 +22,6 @@ const icons = {
 
 const Layout = () => (
   <Tabs
-    initialRouteName="index"
     screenOptions={{
       tabBarActiveTintColor: "white",
       tabBarLabelStyle: { display: "none" },

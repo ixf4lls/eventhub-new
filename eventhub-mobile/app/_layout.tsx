@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { AuthProvider } from "./(auth)/AuthContext";
+import { AuthProvider } from "../src/context/AuthContext";
 import { enableScreens } from "react-native-screens";
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.

@@ -25,17 +25,20 @@ func main() {
 	userRepo := repository.NewGormUserRepository(db)
 	eventRepo := repository.NewGormEventRepository(db)
 	organizationRepo := repository.NewGormOrganizationRepository(db)
+	notificationRepo := repository.NewGormNotificationRepository(db)
 
 	// services
 	authService := service.NewAuthService(cfg, userRepo, jwtManager)
 	registerService := service.NewRegisterService(userRepo)
 	eventService := service.NewEventService(*eventRepo)
 	organizationService := service.NewOrganizationService(*organizationRepo)
+	notificationService := service.NewNotificationService(*notificationRepo, *eventRepo)
 
 	// handlers
 	authHandler := handlers.NewAuthHandler(authService, registerService)
 	eventHandler := handlers.NewEventHandler(eventService)
 	organizationHandler := handlers.NewOrganizationHandler(organizationService)
+	notificationHandler := handlers.NewNotificationHandler(notificationService)
 
 	// middleware
 	authMW := middleware.NewMiddleware(jwtManager)
@@ -51,10 +54,11 @@ func main() {
 	auth := api.Group("", authMW.AuthRequired)
 
 	events := auth.Group("/events")
-	events.GET("", eventHandler.GetAll)           // GET    /api/events
-	events.GET("/:id", eventHandler.GetByID)      // GET /api/events/:id
-	events.POST("/:id/join", eventHandler.Join)   // POST   /api/events/:id/join
-	events.DELETE("/:id/quit", eventHandler.Quit) // DELETE /api/events/:id/quit
+	events.GET("", eventHandler.GetAll)               // GET    /api/events
+	events.GET("/:id", eventHandler.GetByID)          // GET /api/events/:id
+	events.POST("/:id/join", eventHandler.Join)       // POST   /api/events/:id/join
+	events.DELETE("/:id/quit", eventHandler.Quit)     // DELETE /api/events/:id/quit
+	events.DELETE("/:id/delete", eventHandler.Delete) // DELETE /api/events/:id/delete
 
 	organizations := auth.Group("/organizations")
 	organizations.GET("", organizationHandler.GetAll)                 // GET  /api/organizations
@@ -66,6 +70,12 @@ func main() {
 
 	orgCreator := organizations.Group("/:id", authMW.IsOrganizationCreator(organizationService))
 	orgCreator.POST("/events", eventHandler.Create) // POST /api/organizations/:id/events
+
+	notifications := auth.Group("/notifications")
+	notifications.POST("", notificationHandler.Create) // POST /api/notifications
+	notifications.GET("", notificationHandler.GetAll)  // GET /api/notifications
+
+	notificationService.StartScheduler()
 
 	e.Start(":3000")
 }

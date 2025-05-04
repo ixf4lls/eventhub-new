@@ -24,7 +24,6 @@ type Event = {
 type RenderCategoryProps = {
     events: Event[],
     title: string,
-    showEmpty: boolean,
     emptyMessage: string,
     emptyInfo: string
 }
@@ -61,7 +60,7 @@ const renderEvents = (events: Event[], eventsToShow: number) => {
     })
 }
 
-const RenderCategory = ({ events, title, showEmpty, emptyMessage, emptyInfo }: RenderCategoryProps) => {
+const RenderCategory = ({ events, title, emptyMessage, emptyInfo }: RenderCategoryProps) => {
     const step = 2
     const [eventsToShow, setEventsToShow] = useState(step)
 
@@ -69,9 +68,7 @@ const RenderCategory = ({ events, title, showEmpty, emptyMessage, emptyInfo }: R
         <View style={styles.category}>
             {
                 events.length == 0
-                    ? showEmpty
-                        ? <EmptyState message={emptyMessage} info={emptyInfo} />
-                        : null
+                    ? <EmptyState message={emptyMessage} info={emptyInfo} />
                     : <View>
                         <Text style={styles.category__title}>{title}</Text>
                         <View style={styles.category__content}>
