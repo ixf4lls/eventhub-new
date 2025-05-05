@@ -90,8 +90,9 @@ func (s *NotificationService) GetAll(userID uint) ([]domain.Notification, error)
 		}
 
 		notificationsResponse = append(notificationsResponse, domain.Notification{
-			Message: message,
-			Info:    info,
+			Message:   message,
+			Info:      info,
+			CreatedAt: ntf.CreatedAt.String(),
 		})
 	}
 
