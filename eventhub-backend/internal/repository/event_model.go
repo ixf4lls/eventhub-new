@@ -9,7 +9,7 @@ type EventModel struct {
 	Category       string    `json:"category"`
 	IsPublic       bool      `json:"is_public"`
 	Status         string    `json:"status"`
-	Date           time.Time `json:"date"`
+	Date           time.Time `gorm:"type:date" json:"date"`
 	StartTime      string    `gorm:"type:time" json:"start_time"`
 	EndTime        string    `gorm:"type:time" json:"end_time"`
 	Location       string    `json:"location"`

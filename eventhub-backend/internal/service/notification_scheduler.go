@@ -35,6 +35,11 @@ func (s *NotificationService) checkAndSendReminders() error {
 	now := time.Now()
 
 	for _, event := range events {
+		status := event.Status
+		if status == "deleted" || status == "completed" {
+			continue
+		}
+
 		eventStartTime, err := time.Parse("15:04:05", event.StartTime)
 		if err != nil {
 			log.Printf("Ошибка при парсинге времени события %s: %v", event.StartTime, err)
@@ -51,7 +56,6 @@ func (s *NotificationService) checkAndSendReminders() error {
 		case duration >= reminder1hBefore && duration < time.Hour*2:
 			reminderType = "reminder_1h"
 		default:
-			log.Printf("no reminders needed")
 			continue
 		}
 
@@ -69,13 +73,6 @@ func (s *NotificationService) checkAndSendReminders() error {
 	return nil
 }
 
-func combineDateTime(date time.Time, startTime time.Time) time.Time {
-	return time.Date(
-		date.Year(), date.Month(), date.Day(),
-		startTime.Hour(), startTime.Minute(), startTime.Second(), 0, date.Location(),
-	)
-}
-
 func (s *NotificationService) trySendReminder(eventID, userID uint, reminderType string, now time.Time) {
 	alreadySent, err := s.notificationRepo.Exists(eventID, userID, reminderType)
 	if (err != nil && !errors.Is(err, gorm.ErrRecordNotFound)) || alreadySent {
@@ -87,4 +84,11 @@ func (s *NotificationService) trySendReminder(eventID, userID uint, reminderType
 	if err != nil {
 		log.Printf("Ошибка при создании %s уведомления: %v", reminderType, err)
 	}
+}
+
+func combineDateTime(date time.Time, startTime time.Time) time.Time {
+	return time.Date(
+		date.Year(), date.Month(), date.Day(),
+		startTime.Hour(), startTime.Minute(), startTime.Second(), 0, date.Location(),
+	)
 }

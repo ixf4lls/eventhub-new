@@ -19,7 +19,7 @@ func NewNotificationHandler(notificationService *service.NotificationService) *N
 func (h *NotificationHandler) Create(c echo.Context) error {
 	userID := c.Get("userID").(uint)
 
-	eventIDStr := c.Param("id")
+	eventIDStr := c.Param("event_id")
 	if eventIDStr == "" {
 		return echo.NewHTTPError(http.StatusBadRequest, "Некорректный запрос")
 	}

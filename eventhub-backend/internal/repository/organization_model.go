@@ -15,3 +15,7 @@ type OrganizationMemberModel struct {
 	UserID         uint `json:"user_id"`
 	OrganizationID uint `json:"organization_id"`
 }
+
+func (OrganizationMemberModel) TableName() string {
+	return "organization_members"
+}

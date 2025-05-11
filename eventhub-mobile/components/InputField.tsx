@@ -1,5 +1,5 @@
 import { colors } from "@/constants/colors";
-import { memo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
   TextInput,
@@ -19,54 +19,60 @@ type InputFieldProps = {
   props?: any;
 };
 
-const InputField = memo(({
-  value,
-  onChangeText,
-  placeholder,
-  isIncorrect,
-  secureTextEntry,
-  ...props
-}: InputFieldProps) => {
-  const [localValue, setLocalValue] = useState(value);
+const InputField = memo(
+  ({
+    value,
+    onChangeText,
+    placeholder,
+    isIncorrect,
+    secureTextEntry,
+    ...props
+  }: InputFieldProps) => {
+    const [localValue, setLocalValue] = useState(value);
 
-  const handleChange = (text: string) => {
-    setLocalValue(text);
-    onChangeText(text);
-  };
+    const handleChange = (text: string) => {
+      setLocalValue(text);
+      onChangeText(text);
+    };
 
-  return (
-    <View style={styles.container}>
-      <TextInput
-        style={[styles.input, isIncorrect && { borderColor: colors.error }]}
-        value={localValue}
-        onChangeText={handleChange}
-        placeholder={placeholder}
-        placeholderTextColor={colors.form_text}
-        secureTextEntry={secureTextEntry}
-        autoCapitalize="none"
-        autoCorrect={false}
-        {...props}
-      />
-      {secureTextEntry && (
-        <TouchableOpacity
-          onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
-          }}
-          style={styles.passwordVisibility}
-        >
-          <Image
-            source={
-              secureTextEntry
-                ? require("../assets/icons/password_hide.png")
-                : require("../assets/icons/password_show.png")
-            }
-            style={{ width: 16, height: 16 }}
-          />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
-});
+    useEffect(() => {
+      setLocalValue(value);
+    }, [value]);
+
+    return (
+      <View style={styles.container}>
+        <TextInput
+          style={[styles.input, isIncorrect && { borderColor: colors.error }]}
+          value={localValue}
+          onChangeText={handleChange}
+          placeholder={placeholder}
+          placeholderTextColor={colors.form_text}
+          secureTextEntry={secureTextEntry}
+          autoCapitalize="none"
+          autoCorrect={false}
+          {...props}
+        />
+        {secureTextEntry && (
+          <TouchableOpacity
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft);
+            }}
+            style={styles.passwordVisibility}
+          >
+            <Image
+              source={
+                secureTextEntry
+                  ? require("../assets/icons/password_hide.png")
+                  : require("../assets/icons/password_show.png")
+              }
+              style={{ width: 16, height: 16 }}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  },
+);
 
 const styles = StyleSheet.create({
   container: {

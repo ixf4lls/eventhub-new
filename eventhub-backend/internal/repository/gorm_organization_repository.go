@@ -81,6 +81,26 @@ func (r *GormOrganizationRepository) GetAll(userID uint) ([]OrganizationModel, [
 	return joined, founded, nil
 }
 
+func (r *GormOrganizationRepository) GetUserCreator(userID uint) ([]uint, error) {
+	var orgIDs []uint
+
+	if err := r.db.Table("organizations").Where("founder_id = ?", userID).Pluck("id", &orgIDs).Error; err != nil {
+		return nil, err
+	}
+
+	return orgIDs, nil
+}
+
+func (r *GormOrganizationRepository) GetUserJoined(userID uint) ([]uint, error) {
+	var orgIDs []uint
+
+	if err := r.db.Table("organization_members").Where("user_id = ?", userID).Pluck("organization_id", &orgIDs).Error; err != nil {
+		return nil, err
+	}
+
+	return orgIDs, nil
+}
+
 func (r *GormOrganizationRepository) JoinByCode(userID uint, code string) error {
 	var organization OrganizationModel
 	if err := r.db.Where("invite_code = ?", code).First(&organization).Error; err != nil {
@@ -198,6 +218,18 @@ func (r *GormOrganizationRepository) GetMembers(orgID uint) ([]UserAsMember, err
 	}
 
 	return usersResponse, nil
+}
+
+func (r *GormOrganizationRepository) CheckIfEventExists(orgID, eventID uint) (bool, error) {
+	var event EventModel
+	if err := r.db.Table("events").Where("id = ?", eventID).Where("organization_id = ?", orgID).First(&event).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	return true, nil
 }
 
 func generateInviteCode() (string, error) {

@@ -1,12 +1,12 @@
-import { StyleSheet, TouchableOpacity, View } from 'react-native'
-import { Text } from 'react-native'
-import { colors } from '@/constants/colors'
-import * as Haptics from 'expo-haptics'
-import { fonts } from '@/constants/fonts'
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Text } from "react-native";
+import { colors } from "@/constants/colors";
+import * as Haptics from "expo-haptics";
+import { fonts } from "@/constants/fonts";
 
 const handlePress = () => {
-  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-}
+  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+};
 
 const CustomButton = ({
   onPress,
@@ -14,66 +14,70 @@ const CustomButton = ({
   type,
   fill,
 }: {
-  onPress: any
-  title: string
-  type: 'action' | 'cancel'
-  fill: 'solid' | 'bordered'
+  onPress: any;
+  title: string;
+  type: "action" | "cancel";
+  fill: "solid" | "bordered";
 }) => {
   const styles = StyleSheet.create({
     container: {
-      width: '100%',
+      width: "100%",
     },
     button_solid: {
-      boxSizing: 'border-box',
-      backgroundColor: type == 'action' ? colors.primary : colors.error,
-      width: '100%',
+      boxSizing: "border-box",
+      backgroundColor: type == "action" ? colors.primary : colors.error,
+      width: "100%",
       height: 48,
       borderRadius: 12,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
     },
     text_solid: {
-      color: '#ffffff',
+      color: "#ffffff",
       fontSize: 12,
       fontWeight: 600,
       fontFamily: fonts.Unbounded,
+      width: "100%",
+      textAlign: "center",
     },
     button_bordered: {
-      boxSizing: 'border-box',
-      borderColor: type == 'action' ? colors.primary : colors.error,
+      boxSizing: "border-box",
+      borderColor: type == "action" ? colors.primary : colors.error,
       borderWidth: 2,
-      width: '100%',
+      width: "100%",
       height: 48,
       borderRadius: 12,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
     },
     text_bordered: {
-      color: type == 'action' ? colors.primary : colors.error,
+      color: type == "action" ? colors.primary : colors.error,
       fontSize: 12,
       fontWeight: 600,
       fontFamily: fonts.Unbounded,
+      width: "100%",
+      textAlign: "center",
     },
-  })
+  });
   return (
     <View style={styles.container}>
       <TouchableOpacity
         onPress={() => {
-          onPress()
-          handlePress()
+          onPress();
+          handlePress();
         }}
-        style={fill == 'solid' ? styles.button_solid : styles.button_bordered}
+        style={fill == "solid" ? styles.button_solid : styles.button_bordered}
       >
         <Text
-          style={fill == 'solid' ? styles.text_solid : styles.text_bordered}
+          style={fill == "solid" ? styles.text_solid : styles.text_bordered}
         >
           {title}
         </Text>
       </TouchableOpacity>
     </View>
-  )
-}
+  );
+};
 
-export default CustomButton
+export default CustomButton;

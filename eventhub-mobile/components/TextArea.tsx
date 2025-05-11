@@ -1,10 +1,6 @@
 import { colors } from "@/constants/colors";
-import { memo, useState } from "react";
-import {
-  StyleSheet,
-  TextInput,
-  View,
-} from "react-native";
+import { memo, useEffect, useState } from "react";
+import { StyleSheet, TextInput, View } from "react-native";
 import { fonts } from "@/constants/fonts";
 
 type TextAreaProps = {
@@ -15,36 +11,42 @@ type TextAreaProps = {
   props?: any;
 };
 
-const TextArea = memo(({
-  value,
-  onChangeText,
-  placeholder,
-  isIncorrect,
-  ...props
-}: TextAreaProps) => {
-  const [localValue, setLocalValue] = useState(value);
+const TextArea = memo(
+  ({
+    value,
+    onChangeText,
+    placeholder,
+    isIncorrect,
+    ...props
+  }: TextAreaProps) => {
+    const [localValue, setLocalValue] = useState(value);
 
-  const handleChange = (text: string) => {
-    setLocalValue(text);
-    onChangeText(text);
-  };
+    const handleChange = (text: string) => {
+      setLocalValue(text);
+      onChangeText(text);
+    };
 
-  return (
-    <View style={styles.container}>
-      <TextInput
-        style={[styles.input, isIncorrect && { borderColor: colors.error }]}
-        value={localValue}
-        onChangeText={handleChange}
-        placeholder={placeholder}
-        placeholderTextColor={colors.form_text}
-        multiline={true}
-        numberOfLines={6}
-        textAlignVertical="top"
-        {...props}
-      />
-    </View>
-  );
-});
+    useEffect(() => {
+      setLocalValue(value);
+    }, [value]);
+
+    return (
+      <View style={styles.container}>
+        <TextInput
+          style={[styles.input, isIncorrect && { borderColor: colors.error }]}
+          value={localValue}
+          onChangeText={handleChange}
+          placeholder={placeholder}
+          placeholderTextColor={colors.form_text}
+          multiline={true}
+          numberOfLines={6}
+          textAlignVertical="top"
+          {...props}
+        />
+      </View>
+    );
+  },
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -65,4 +67,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TextArea; 
+export default TextArea;

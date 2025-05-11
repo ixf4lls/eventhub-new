@@ -17,14 +17,12 @@ type Event struct {
 }
 
 type CreateEventInput struct {
-	Title          string    `json:"title"`
-	Description    string    `json:"description"`
-	Category       string    `json:"category"`
-	Location       string    `json:"location"`
-	IsPublic       bool      `json:"is_public"`
-	CreatorID      uint      `json:"creator_id"`
-	OrganizationID uint      `json:"organization_id"`
-	Date           time.Time `json:"date"`
-	StartTime      string    `json:"start_time"`
-	EndTime        string    `json:"end_time"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Category    string    `json:"category"`
+	Location    string    `json:"location"`
+	IsPublic    bool      `json:"is_public"`
+	Date        time.Time `gorm:"type:date" json:"date"`
+	StartTime   string    `gorm:"type:time" json:"start_time"`
+	EndTime     string    `gorm:"type:time" json:"end_time"`
 }

@@ -1,7 +1,8 @@
 package domain
 
 type Notification struct {
-	Message   string
-	Info      string
-	CreatedAt string
+	ID        uint   `json:"id"`
+	Message   string `json:"message"`
+	Info      string `json:"info"`
+	CreatedAt string `json:"created_at"`
 }

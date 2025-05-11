@@ -15,7 +15,6 @@ func NewGormNotificationRepository(db *gorm.DB) *GormNotificationRepository {
 }
 
 func (r *GormNotificationRepository) Create(userID, eventID uint, msgType string) error {
-
 	notification := NotificationModel{
 		UserID:  userID,
 		EventID: eventID,
@@ -51,4 +50,14 @@ func (r *GormNotificationRepository) Exists(eventID, userID uint, msgType string
 	}
 
 	return true, nil
+}
+
+func (r *GormNotificationRepository) GetById(notificationID uint) (NotificationModel, error) {
+	var notification NotificationModel
+
+	if err := r.db.Where("id = ?", notificationID).First(&notification).Error; err != nil {
+		return NotificationModel{}, err
+	}
+
+	return notification, nil
 }

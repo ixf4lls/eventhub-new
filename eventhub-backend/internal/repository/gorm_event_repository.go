@@ -36,22 +36,56 @@ func parseEventTime(events []EventModel) []EventResponse {
 	return response
 }
 
-func (r *GormEventRepository) GetAll(userID uint) ([]EventResponse, []EventResponse, error) {
-	var joinedEventIDs []int
-	var joinedEvents, openEvents []EventModel
+func (r *GormEventRepository) GetAll() ([]EventModel, error) {
+	var events []EventModel
 
+	if err := r.db.Table("events").Find(&events).Error; err != nil {
+		return nil, err
+	}
+
+	return events, nil
+}
+
+func (r *GormEventRepository) GetAllUser(userID uint, userJoinedOrgs, userCreatorOrgs []uint) ([]EventResponse, []EventResponse, []EventResponse, error) {
+	var joinedEventIDs []uint
+	var joinedEvents, openEvents, availableClosedEvents []EventModel
+
+	// мероприятия, в которых участвует пользователь
 	if err := r.db.Table("event_participants").Where("user_id = ?", userID).Pluck("event_id", &joinedEventIDs).Error; err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
-	if err := r.db.Where("id IN (?)", joinedEventIDs).Find(&joinedEvents).Error; err != nil {
-		return nil, nil, err
+	if len(joinedEventIDs) > 0 {
+		if err := r.db.Where("id IN ?", joinedEventIDs).Find(&joinedEvents).Error; err != nil {
+			return nil, nil, nil, err
+		}
 	}
 
+	// все открытые мероприятия
 	if err := r.db.Where("is_public = ?", true).Find(&openEvents).Error; err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	return parseEventTime(joinedEvents), parseEventTime(openEvents), nil
+	// доступные закрытые мероприятия (из организаций)
+	accessibleOrgIDs := append(userJoinedOrgs, userCreatorOrgs...)
+	var availableClosedEventIDs []uint
+
+	if len(accessibleOrgIDs) > 0 {
+		if err := r.db.
+			Model(&EventModel{}).
+			Where("organization_id IN ?", accessibleOrgIDs).
+			Where("is_public = ?", false).
+			Pluck("id", &availableClosedEventIDs).Error; err != nil {
+			return nil, nil, nil, err
+		}
+
+		if len(availableClosedEventIDs) > 0 {
+			if err := r.db.Where("id IN ?", availableClosedEventIDs).Find(&availableClosedEvents).Error; err != nil {
+				return nil, nil, nil, err
+			}
+		}
+	}
+
+	return parseEventTime(joinedEvents), parseEventTime(openEvents), parseEventTime(availableClosedEvents), nil
 }
 
 func (r *GormEventRepository) GetUpcoming() ([]EventModel, error) {
@@ -67,6 +101,28 @@ func (r *GormEventRepository) GetUpcoming() ([]EventModel, error) {
 	}
 
 	return events, nil
+}
+
+func (r *GormEventRepository) GetEventIDsToMarkCompleted() ([]EventModel, error) {
+	var events []EventModel
+	if err := r.db.Where("(date + start_time) <= ?", time.Now()).Where("status = ?", "active").Find(&events).Error; err != nil {
+		return nil, err
+	}
+
+	return events, nil
+}
+
+func (r *GormEventRepository) MarkEventsCompleted(events []EventModel) error {
+	var eventIDs []uint
+	for _, event := range events {
+		eventIDs = append(eventIDs, event.ID)
+	}
+
+	if err := r.db.Table("events").Where("id IN (?)", eventIDs).Update("status", "completed").Error; err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r *GormEventRepository) Join(userID, eventID uint) error {
@@ -95,7 +151,7 @@ func (r *GormEventRepository) Quit(userID, eventID uint) error {
 	return nil
 }
 
-func (r *GormEventRepository) Create(input domain.CreateEventInput, creatorID, orgID uint) error {
+func (r *GormEventRepository) Create(input domain.CreateEventInput, creatorID, orgID uint) (*EventModel, error) {
 	event := EventModel{
 		Title:          input.Title,
 		Description:    input.Description,
@@ -111,15 +167,15 @@ func (r *GormEventRepository) Create(input domain.CreateEventInput, creatorID, o
 	}
 
 	if err := r.db.Create(&event).Error; err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &event, nil
 }
 
 func (r *GormEventRepository) IsEventExist(eventID uint) (bool, error) {
 	var event EventModel
-	if err := r.db.Where("id = ?", eventID).First(&event).Error; err != nil {
+	if err := r.db.Where("id = ? AND status != ?", eventID, "deleted").First(&event).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return false, nil
 		}
@@ -162,6 +218,15 @@ func (r *GormEventRepository) GetByID(eventID, userID uint) (EventResponse, bool
 	}, userID == event.CreatorId, nil
 }
 
+func (r *GormEventRepository) GetEventModelByID(eventID uint) (EventModel, error) {
+	var event EventModel
+	if err := r.db.Where("id = ?", eventID).First(&event).Error; err != nil {
+		return EventModel{}, err
+	}
+
+	return event, nil
+}
+
 func (r *GormEventRepository) GetParticipants(eventID uint) ([]uint, error) {
 	var participantIDs []uint
 	err := r.db.Table("event_participants").Where("event_id = ?", eventID).Pluck("user_id", &participantIDs).Error
@@ -169,24 +234,24 @@ func (r *GormEventRepository) GetParticipants(eventID uint) ([]uint, error) {
 }
 
 func (r *GormEventRepository) Delete(eventID uint) error {
-	var event EventModel
-	if err := r.db.Where("id = ?", eventID).First(&event).Error; err != nil {
-		return err
-	}
-
-	if err := r.db.Delete(&event).Error; err != nil {
-		return err
-	}
-
-	return nil
+	return r.db.Model(&EventModel{}).
+		Where("id = ?", eventID).
+		Update("status", "deleted").Error
 }
 
 func (r *GormEventRepository) IsUserCreator(userID, eventID uint) (bool, error) {
 	var event EventModel
 
 	if err := r.db.Where("id = ?", eventID).First(&event).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
 		return false, err
 	}
 
 	return event.CreatorId == userID, nil
+}
+
+func (r *GormEventRepository) Update(event *EventModel) error {
+	return r.db.Save(event).Error
 }

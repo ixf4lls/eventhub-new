@@ -65,7 +65,7 @@ func (h *OrganizationHandler) JoinByCode(c echo.Context) error {
 
 	if err := h.organizationService.JoinByCode(userID, code); err != nil {
 		if err.Error() == "organization not found" {
-			return echo.NewHTTPError(http.StatusNotFound, "Код прилашения не существует")
+			return echo.NewHTTPError(http.StatusNotFound, "Неверный код приглашения")
 		}
 
 		if err.Error() == "user already a member of the organization" {

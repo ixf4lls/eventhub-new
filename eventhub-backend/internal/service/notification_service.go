@@ -24,9 +24,8 @@ func (s *NotificationService) Create(userID, eventID uint, msgType string) error
 
 	exists, err := s.eventRepo.IsEventExist(eventID)
 	if err != nil {
-		return nil
+		return err
 	}
-
 	if !exists {
 		return errors.New("event do not exists")
 	}
@@ -93,6 +92,7 @@ func (s *NotificationService) GetAll(userID uint) ([]domain.Notification, error)
 			Message:   message,
 			Info:      info,
 			CreatedAt: ntf.CreatedAt.String(),
+			ID:        ntf.ID,
 		})
 	}
 

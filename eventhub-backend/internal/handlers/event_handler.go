@@ -4,6 +4,7 @@ import (
 	"errors"
 	"eventhub-backend/internal/domain"
 	"eventhub-backend/internal/service"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -12,24 +13,26 @@ import (
 )
 
 type EventHandler struct {
-	eventService *service.EventService
+	eventService        *service.EventService
+	notificationService *service.NotificationService
 }
 
-func NewEventHandler(eventService *service.EventService) *EventHandler {
-	return &EventHandler{eventService: eventService}
+func NewEventHandler(eventService *service.EventService, notificationService *service.NotificationService) *EventHandler {
+	return &EventHandler{eventService: eventService, notificationService: notificationService}
 }
 
-func (h *EventHandler) GetAll(c echo.Context) error {
+func (h *EventHandler) GetAllUser(c echo.Context) error {
 	userID := c.Get("userID").(uint)
 
-	joinedEvents, openEvents, err := h.eventService.GetAll(userID)
+	joinedEvents, openEvents, organizationsEvents, err := h.eventService.GetAllUser(userID)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Ошибка при получении событий")
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"joined_events": joinedEvents,
-		"open_events":   openEvents,
+		"joined_events":        joinedEvents,
+		"open_events":          openEvents,
+		"organizations_events": organizationsEvents,
 	})
 }
 
@@ -94,6 +97,7 @@ func (h *EventHandler) Create(c echo.Context) error {
 
 	var input domain.CreateEventInput
 	if err := c.Bind(&input); err != nil {
+		log.Println(input)
 		return echo.NewHTTPError(http.StatusBadRequest, "Некорректный запрос")
 	}
 
@@ -140,9 +144,63 @@ func (h *EventHandler) Delete(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Некорректный запрос")
 	}
 
+	if err := h.notificationService.Create(userID, uint(eventID), "cancel"); err != nil {
+		if err.Error() == "incorrect msg type" {
+			return echo.NewHTTPError(http.StatusBadRequest, "Некорректный запрос")
+		}
+		if err.Error() == "event do not exists" {
+			return echo.NewHTTPError(http.StatusBadRequest, "Мероприятие не существует")
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, "Ошибка при создании уведомления")
+	}
+
 	if err := h.eventService.Delete(userID, uint(eventID)); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Ошибка при удалении мероприятия")
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+func (h *EventHandler) Update(c echo.Context) error {
+	userID := c.Get("userID").(uint)
+
+	orgIDStr := c.Param("id")
+	orgID, err := strconv.ParseUint(orgIDStr, 10, 64)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Некорректный запрос")
+	}
+
+	eventIDstr := c.Param("event_id")
+	eventID, err := strconv.ParseUint(eventIDstr, 10, 64)
+	if err != nil || eventIDstr == "" {
+		return echo.NewHTTPError(http.StatusBadRequest, "Некорректный ID мероприятия")
+	}
+
+	var input domain.CreateEventInput
+	if err := c.Bind(&input); err != nil {
+		log.Println(input)
+		return echo.NewHTTPError(http.StatusBadRequest, "Некорректный запрос")
+	}
+
+	if err := h.eventService.Update(userID, uint(eventID), uint(orgID), input); err != nil {
+		if err.Error() == "access denied" {
+			return echo.NewHTTPError(http.StatusForbidden, "У вас нет прав для обновления этого мероприятия")
+		}
+		if err.Error() == "event not exists" {
+			return echo.NewHTTPError(http.StatusNotFound, "Мероприятие не найдено")
+		}
+
+		return echo.NewHTTPError(http.StatusInternalServerError, "Ошибка при обновлении мероприятия")
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"message": "Мероприятие успешно обновлено"})
+}
+
+func (h *EventHandler) UpdateSearchIndex(c echo.Context) error {
+	err := h.eventService.UpdateSearchIndex()
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Ошибка при индексации")
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{"success": "Индексация успешно завершена"})
 }

@@ -9,14 +9,25 @@ import (
 
 type EventService struct {
 	eventRepo repository.GormEventRepository
+	orgRepo   repository.GormOrganizationRepository
 }
 
-func NewEventService(eventRepo repository.GormEventRepository) *EventService {
-	return &EventService{eventRepo: eventRepo}
+func NewEventService(eventRepo repository.GormEventRepository, orgRepo repository.GormOrganizationRepository) *EventService {
+	return &EventService{eventRepo: eventRepo, orgRepo: orgRepo}
 }
 
-func (s *EventService) GetAll(userID uint) ([]repository.EventResponse, []repository.EventResponse, error) {
-	return s.eventRepo.GetAll(userID)
+func (s *EventService) GetAllUser(userID uint) ([]repository.EventResponse, []repository.EventResponse, []repository.EventResponse, error) {
+	userJoined, err := s.orgRepo.GetUserJoined(userID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	userCreator, err := s.orgRepo.GetUserCreator(userID)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	return s.eventRepo.GetAllUser(userID, userJoined, userCreator)
 }
 
 func (s *EventService) Join(userID, eventID uint) error {
@@ -62,18 +73,17 @@ func (s *EventService) Quit(userID, eventID uint) error {
 func (s *EventService) Create(input domain.CreateEventInput, creatorID, orgID uint) error {
 	today := time.Now().Truncate(24 * time.Hour)
 	if input.Date.Before(today) {
-		return errors.New("date in past")
+		return errors.New("дата в прошлом")
 	}
 
-	inputStartTime, _ := time.Parse("15:04:05", input.StartTime)
-
-	inputEndTime, _ := time.Parse("15:04:05", input.EndTime)
-
-	if inputStartTime.After(inputEndTime) {
-		return errors.New("incorrect time")
+	event, err := s.eventRepo.Create(input, creatorID, orgID)
+	if err != nil {
+		return err
 	}
 
-	return s.eventRepo.Create(input, creatorID, orgID)
+	go createEventDocInElastic(event)
+
+	return nil
 }
 
 func (s *EventService) GetByID(eventID, userID uint) (repository.EventResponse, bool, error) {
@@ -99,4 +109,68 @@ func (s *EventService) Delete(userID, eventID uint) error {
 	}
 
 	return s.eventRepo.Delete(eventID)
+}
+
+func (s *EventService) Update(userID, eventID, orgID uint, input domain.CreateEventInput) error {
+	isCreator, err := s.eventRepo.IsUserCreator(userID, eventID)
+	if err != nil {
+		return err
+	}
+	if !isCreator {
+		return errors.New("access denied")
+	}
+
+	exists, err := s.eventRepo.IsEventExist(eventID)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return errors.New("event not exists")
+	}
+
+	existsInOrg, err := s.orgRepo.CheckIfEventExists(orgID, eventID)
+	if err != nil {
+		return err
+	}
+	if !existsInOrg {
+		return errors.New("event not exists in this organization")
+	}
+
+	event := repository.EventModel{
+		ID:             eventID,
+		Title:          input.Title,
+		Description:    input.Description,
+		Category:       input.Category,
+		IsPublic:       input.IsPublic,
+		Status:         "active",
+		Date:           input.Date,
+		StartTime:      input.StartTime,
+		EndTime:        input.EndTime,
+		Location:       input.Location,
+		CreatorId:      userID,
+		OrganizationId: orgID,
+	}
+
+	err = s.eventRepo.Update(&event)
+	if err != nil {
+		return err
+	}
+
+	go createEventDocInElastic(&event)
+
+	return nil
+}
+
+func (s *EventService) UpdateSearchIndex() error {
+	events, err := s.eventRepo.GetAll()
+
+	if err != nil {
+		return err
+	}
+
+	for _, event := range events {
+		go createEventDocInElastic(&event)
+	}
+
+	return nil
 }

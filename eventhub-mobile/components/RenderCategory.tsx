@@ -25,7 +25,8 @@ type RenderCategoryProps = {
     events: Event[],
     title: string,
     emptyMessage: string,
-    emptyInfo: string
+    emptyInfo: string,
+    isCompleted: boolean
 }
 
 const formatDate = (date: string) => {
@@ -42,7 +43,7 @@ const formatTime = (time: string) => {
     return time.slice(0, 5)
 }
 
-const renderEvents = (events: Event[], eventsToShow: number) => {
+const renderEvents = (events: Event[], eventsToShow: number, isCompleted: boolean) => {
     return events.slice(0, eventsToShow).map((event) => {
         return (
             <View style={styles.category__item} key={'event_' + event.id}>
@@ -54,13 +55,14 @@ const renderEvents = (events: Event[], eventsToShow: number) => {
                     start_time={formatTime(event.start_time)}
                     end_time={formatTime(event.end_time)}
                     location={event.location}
+                    isCompleted={isCompleted}
                 />
             </View>
         )
     })
 }
 
-const RenderCategory = ({ events, title, emptyMessage, emptyInfo }: RenderCategoryProps) => {
+const RenderCategory = ({ events, title, emptyMessage, emptyInfo, isCompleted }: RenderCategoryProps) => {
     const step = 2
     const [eventsToShow, setEventsToShow] = useState(step)
 
@@ -68,11 +70,13 @@ const RenderCategory = ({ events, title, emptyMessage, emptyInfo }: RenderCatego
         <View style={styles.category}>
             {
                 events.length == 0
-                    ? <EmptyState message={emptyMessage} info={emptyInfo} />
+                    ? emptyMessage == ''
+                        ? null
+                        : <EmptyState message={emptyMessage} info={emptyInfo} />
                     : <View>
                         <Text style={styles.category__title}>{title}</Text>
                         <View style={styles.category__content}>
-                            {renderEvents(events, eventsToShow)}
+                            {renderEvents(events, eventsToShow, isCompleted)}
                         </View>
                         {
                             eventsToShow >= events.length

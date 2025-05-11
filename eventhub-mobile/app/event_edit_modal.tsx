@@ -4,7 +4,7 @@ import TextArea from "@/components/TextArea";
 import { colors } from "@/constants/colors";
 import { fonts } from "@/constants/fonts";
 import { router, useLocalSearchParams } from "expo-router";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
   Switch,
@@ -33,6 +33,27 @@ type TempEvent = {
   location: string;
 };
 
+type Event = {
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  is_public: boolean;
+  status: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  location: string;
+  creator_id: number;
+  organization_id: number;
+};
+
+type EventResponse = {
+  event: Event;
+  is_joined: boolean;
+  is_creator: boolean;
+};
+
 const formatDate = (date: Date | null) => {
   if (!date) return "Выбрать дату";
   return date.toLocaleDateString("ru-RU", {
@@ -43,7 +64,7 @@ const formatDate = (date: Date | null) => {
 };
 
 const formatTime = (date: Date | null) => {
-  if (!date) return "Выбрать время";
+  if (!date || isNaN(date.getTime())) return "Выбрать время";
   return date.toLocaleTimeString("ru-RU", {
     hour: "2-digit",
     minute: "2-digit",
@@ -51,7 +72,7 @@ const formatTime = (date: Date | null) => {
 };
 
 const ModalScreen = () => {
-  const { org_id } = useLocalSearchParams();
+  const { org_id, event_id } = useLocalSearchParams();
 
   const swiperRef = useRef<Swiper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -144,7 +165,54 @@ const ModalScreen = () => {
     }
   };
 
-  const createEvent = async () => {
+  const LoadData = async (id: number) => {
+    try {
+      const response = (await fetchWithToken(
+        `http://${ADDRESS}/api/events/${id}`,
+        { method: "GET" },
+      )) as Response;
+
+      if (!response.ok) {
+        if (response.status === 401) router.replace("/(auth)/login");
+        throw new Error(`Ошибка запроса: ${response.status}`);
+      }
+
+      const { event } = (await response.json()) as EventResponse;
+
+      const [year, month, day] = event.date.split("-").map(Number);
+      const dateObj = new Date(year, month - 1, day);
+
+      const parseTime = (timeStr: string) => {
+        const [h, m, s] = timeStr.split(":").map(Number);
+        return new Date(year, month - 1, day, h, m, s);
+      };
+      const startObj = parseTime(event.start_time);
+      const endObj = parseTime(event.end_time);
+
+      setTempEvent({
+        is_public: event.is_public,
+        title: event.title,
+        category: event.category,
+        description: event.description,
+        date: dateObj,
+        start_time: startObj,
+        end_time: endObj,
+        location: event.location,
+      });
+    } catch (error) {
+      Alert.alert("Ошибка сервера", "Проверьте подключение.");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
+
+  useEffect(() => {
+    if (event_id) {
+      LoadData(Number(event_id));
+    }
+  }, [event_id]);
+
+  const updateEvent = async () => {
+    console.log(org_id, event_id);
     try {
       const formattedDate = tempEvent.date
         ? tempEvent.date.toISOString()
@@ -157,9 +225,9 @@ const ModalScreen = () => {
         : null;
 
       const response = (await fetchWithToken(
-        "http://" + ADDRESS + "/api/organizations/" + org_id + "/events",
+        `http://${ADDRESS}/api/organizations/${org_id}/events/${event_id}/update`,
         {
-          method: "POST",
+          method: "PUT",
           body: JSON.stringify({
             title: tempEvent.title,
             description: tempEvent.description,
@@ -177,12 +245,14 @@ const ModalScreen = () => {
         if (response.status === 401) {
           router.replace("/(auth)/login");
         }
+        const errData = await response.json();
+        console.log(errData);
         throw new Error(`Ошибка запроса: ${response.status}`);
       }
 
       Alert.alert(
         "Успех! 🎉",
-        "Мероприятие успешно создано. Вы будете перенаправлены на предыдущий экран.",
+        "Мероприятие успешно изменено. Вы будете перенаправлены на главную.",
         [
           {
             text: "OK",
@@ -191,12 +261,13 @@ const ModalScreen = () => {
                 Haptics.NotificationFeedbackType.Success,
               );
               router.back();
+              router.back();
             },
           },
         ],
       );
     } catch (error) {
-      Alert.alert("Ошибка сервера", "Проверьте подключение.");
+      Alert.alert("Ошибка сервера", "Проверьте подключение." + error);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
@@ -204,7 +275,7 @@ const ModalScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.header__title}>Создание мероприятия</Text>
+        <Text style={styles.header__title}>Изменение мероприятия</Text>
         <Text style={styles.header__step}>
           Шаг {activeIndex + 1}. {stepNames[activeIndex]}
         </Text>
@@ -502,8 +573,8 @@ const ModalScreen = () => {
         </View>
         <View style={{ flexGrow: 6 }}>
           <CustomButton
-            title={activeIndex == 4 ? "Создать мероприятие" : "Далее"}
-            onPress={activeIndex == 4 ? createEvent : handleNext}
+            title={activeIndex == 4 ? "Изменить мероприятие" : "Далее"}
+            onPress={activeIndex == 4 ? updateEvent : handleNext}
             type={"action"}
             fill={"solid"}
           />

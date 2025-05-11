@@ -12,7 +12,7 @@ const Home = () => {
   // prod
   return (
     <ActionSheetProvider>
-      <Redirect href={user ? "/(root)/(tabs)/home" : "/(auth)/welcome"} />
+      <Redirect href={user ? "/(root)/(tabs)/home" : "/(auth)/login"} />
     </ActionSheetProvider>
   )
 

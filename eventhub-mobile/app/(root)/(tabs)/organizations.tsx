@@ -7,169 +7,172 @@ import { fetchWithToken } from "@/utils/tokenInterceptor";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { StyleSheet, Text, View, Dimensions, Modal, Alert, ScrollView, RefreshControl } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Dimensions,
+  Modal,
+  Alert,
+  ScrollView,
+  RefreshControl,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import * as Haptics from 'expo-haptics'
+import * as Haptics from "expo-haptics";
 import OrganizationCard from "@/components/OrganizationCard";
-import CustomNotification from "@/components/Notification";
 
 type Organization = {
-  id: number,
-  name: string
-  founder_id: number,
-  invite_code: string,
-}
+  id: number;
+  name: string;
+  founder_id: number;
+  invite_code: string;
+};
 
 type Notification = {
-  type: 'success' | 'error',
-  message: string
-}
+  type: "success" | "error";
+  message: string;
+};
 
 const Organizations = () => {
-  const [joined, setJoined] = useState<Organization[]>([])
-  const [founded, setFounded] = useState<Organization[]>([])
+  const [joined, setJoined] = useState<Organization[]>([]);
+  const [founded, setFounded] = useState<Organization[]>([]);
 
-  const [joinByCodeMenuActive, setJoinByCodeMenuActive] = useState(false)
-  const [createOrgMenuActive, setCreateOrgMenuActive] = useState(false)
+  const [joinByCodeMenuActive, setJoinByCodeMenuActive] = useState(false);
+  const [createOrgMenuActive, setCreateOrgMenuActive] = useState(false);
 
-  const [tempOrgName, setTempOrgName] = useState("")
-  const [tempInviteCode, setTempInviteCode] = useState("")
+  const [tempOrgName, setTempOrgName] = useState("");
+  const [tempInviteCode, setTempInviteCode] = useState("");
 
-  const [refreshing, setRefreshing] = useState(false)
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const LoadOrganizations = async () => {
-    setRefreshing(true)
+    setRefreshing(true);
     try {
-      const token = await AsyncStorage.getItem('accessToken')
+      const token = await AsyncStorage.getItem("accessToken");
       if (!token) {
-        router.replace('/(auth)/login')
-        return
+        router.replace("/(auth)/login");
+        return;
       }
-      const response = await fetchWithToken(
-        'http://' + ADDRESS + '/api/organizations',
+      const response = (await fetchWithToken(
+        "http://" + ADDRESS + "/api/organizations",
         {
-          method: 'GET',
-        }
-      ) as Response
+          method: "GET",
+        },
+      )) as Response;
 
       if (!response.ok) {
         if (response.status === 401) {
-          router.replace('/(auth)/login')
+          router.replace("/(auth)/login");
         }
-        throw new Error(`Ошибка запроса: ${response.status}`)
+        throw new Error(`Ошибка запроса: ${response.status}`);
       }
 
-      const data = await response.json()
+      const data = await response.json();
 
-      const joined = Array.isArray(data.joined) ? data.joined : []
-      const founded = Array.isArray(data.founded) ? data.founded : []
+      const joined = Array.isArray(data.joined) ? data.joined : [];
+      const founded = Array.isArray(data.founded) ? data.founded : [];
 
-      setJoined(joined)
-      setFounded(founded)
+      setJoined(joined);
+      setFounded(founded);
     } catch (error) {
-      console.error('Ошибка запроса:', error)
+      console.error("Ошибка запроса:", error);
     } finally {
-      setRefreshing(false)
+      setRefreshing(false);
     }
-  }
+  };
 
   const createOrg = async () => {
-    if (tempOrgName == '') {
-      Alert.alert('Ошибка', "Укажите название организации")
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-      return
+    if (tempOrgName == "") {
+      Alert.alert("Ошибка", "Укажите название организации");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
     }
     try {
-      const response = await fetchWithToken(
-        'http://' + ADDRESS + '/api/organizations',
+      const response = (await fetchWithToken(
+        "http://" + ADDRESS + "/api/organizations",
         {
-          method: 'POST',
-          body: JSON.stringify({ "organization_name": tempOrgName }),
-        }
-      ) as Response
+          method: "POST",
+          body: JSON.stringify({ organization_name: tempOrgName }),
+        },
+      )) as Response;
 
       if (!response.ok) {
-        const errorData = await response.json()
+        const errorData = await response.json();
         if (response.status === 401) {
-          router.replace('/(auth)/login')
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+          router.replace("/(auth)/login");
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } else {
-          Alert.alert('Ошибка', errorData.message)
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+          Alert.alert("Ошибка", errorData.message);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
-        return
+        return;
       }
 
-      setCreateOrgMenuActive(false)
-      LoadOrganizations()
-      Alert.alert(
-        "Успех! 🎉",
-        "Организация успешно создана",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            }
-          }
-        ]
-      );
+      setCreateOrgMenuActive(false);
+      LoadOrganizations();
+      Alert.alert("Успех! 🎉", "Организация успешно создана", [
+        {
+          text: "OK",
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          },
+        },
+      ]);
     } catch (error) {
-      Alert.alert('Ошибка сервера', 'Проверьте подключение.')
+      Alert.alert("Ошибка сервера", "Проверьте подключение.");
     }
-  }
+  };
 
   const joinByCode = async () => {
-    if (tempInviteCode == '') {
-      Alert.alert('Ошибка', "Укажите код приглашения")
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
-      return
+    if (tempInviteCode == "") {
+      Alert.alert("Ошибка", "Укажите код приглашения");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      return;
     }
     try {
-      const token = await AsyncStorage.getItem('accessToken')
+      const token = await AsyncStorage.getItem("accessToken");
       if (!token) {
-        router.replace('/(auth)/login')
-        return
+        router.replace("/(auth)/login");
+        return;
       }
-      const response = await fetchWithToken(
-        'http://' + ADDRESS + '/api/organizations/join/' + tempInviteCode.toUpperCase(),
+      const response = (await fetchWithToken(
+        "http://" +
+          ADDRESS +
+          "/api/organizations/join/" +
+          tempInviteCode.toUpperCase(),
         {
-          method: 'POST',
-        }
-      ) as Response
+          method: "POST",
+        },
+      )) as Response;
 
       if (!response.ok) {
-        const errorData = await response.json()
+        const errorData = await response.json();
         if (response.status === 401) {
-          router.replace('/(auth)/login')
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+          router.replace("/(auth)/login");
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         } else {
-          Alert.alert('Ошибка', errorData.message)
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
+          Alert.alert("Ошибка", errorData.message);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
         }
-        return
+        return;
       }
 
-      setJoinByCodeMenuActive(false)
-      LoadOrganizations()
-      Alert.alert(
-        "Успех! 🎉",
-        "Вы успешно присоединились к организации",
-        [
-          {
-            text: "OK",
-            onPress: () => {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            }
-          }
-        ]
-      );
+      setJoinByCodeMenuActive(false);
+      LoadOrganizations();
+      Alert.alert("Успех! 🎉", "Вы успешно присоединились к организации", [
+        {
+          text: "OK",
+          onPress: () => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          },
+        },
+      ]);
     } catch (error) {
-      Alert.alert('Ошибка сервера', 'Проверьте подключение.')
+      Alert.alert("Ошибка сервера", "Проверьте подключение.");
     }
-  }
+  };
 
   const renderCreateOrgMenu = () => {
     return (
@@ -180,17 +183,34 @@ const Organizations = () => {
         onRequestClose={() => setCreateOrgMenuActive(false)}
       >
         <View style={styles.menu}>
-          <Text style={styles.menu__title}>Как будет называться ваша организация?</Text>
-          <InputField value={tempOrgName} onChangeText={(text) => setTempOrgName(text)} placeholder="Введите название организации" secureTextEntry={false} />
+          <Text style={styles.menu__title}>
+            Как будет называться ваша организация?
+          </Text>
+          <InputField
+            value={tempOrgName}
+            onChangeText={(text) => setTempOrgName(text)}
+            placeholder="Введите название организации"
+            secureTextEntry={false}
+          />
           <View style={{ width: "100%", marginBottom: 8, marginTop: 16 }}>
-            <CustomButton onPress={() => createOrg()} title="Создать организацию" type="action" fill="solid" />
+            <CustomButton
+              onPress={() => createOrg()}
+              title="Создать организацию"
+              type="action"
+              fill="solid"
+            />
           </View>
-          <CustomButton onPress={() => setCreateOrgMenuActive(false)} title="Назад" type="action" fill="bordered" />
+          <CustomButton
+            onPress={() => setCreateOrgMenuActive(false)}
+            title="Назад"
+            type="action"
+            fill="bordered"
+          />
         </View>
         <View style={styles.overlay} />
       </Modal>
-    )
-  }
+    );
+  };
 
   const renderJoinOrgMenu = () => {
     return (
@@ -202,26 +222,55 @@ const Organizations = () => {
       >
         <View style={styles.menu}>
           <Text style={styles.menu__title}>Присоединиться по коду</Text>
-          <InputField value={tempInviteCode} onChangeText={(text) => setTempInviteCode(text.toUpperCase())} placeholder="Введите код приглашения" secureTextEntry={false} />
+          <InputField
+            value={tempInviteCode}
+            onChangeText={(text) => setTempInviteCode(text.toUpperCase())}
+            placeholder="Введите код приглашения"
+            secureTextEntry={false}
+          />
           <View style={{ width: "100%", marginBottom: 8, marginTop: 16 }}>
-            <CustomButton onPress={() => joinByCode()} title="Присоединиться" type="action" fill="solid" />
+            <CustomButton
+              onPress={() => joinByCode()}
+              title="Присоединиться"
+              type="action"
+              fill="solid"
+            />
           </View>
-          <CustomButton onPress={() => setJoinByCodeMenuActive(false)} title="Назад" type="action" fill="bordered" />
+          <CustomButton
+            onPress={() => setJoinByCodeMenuActive(false)}
+            title="Назад"
+            type="action"
+            fill="bordered"
+          />
         </View>
         <View style={styles.overlay} />
       </Modal>
-    )
-  }
+    );
+  };
 
   const renderNoOrgs = () => {
     return (
       <View style={styles.welcome}>
-        <Text style={styles.welcome__text}>👋 Привет! Ты пока не в организации, но это легко исправить!</Text>
-        <View style={{ marginBottom: 8 }}><CustomButton onPress={() => setJoinByCodeMenuActive(true)} title={"Присоединиться по коду"} type='action' fill='solid' /></View>
-        <CustomButton onPress={() => setCreateOrgMenuActive(true)} title={"Создать организацию"} type='action' fill='bordered' />
+        <Text style={styles.welcome__text}>
+          👋 Привет! Ты пока не в организации, но это легко исправить!
+        </Text>
+        <View style={{ marginBottom: 8 }}>
+          <CustomButton
+            onPress={() => setJoinByCodeMenuActive(true)}
+            title={"Присоединиться по коду"}
+            type="action"
+            fill="solid"
+          />
+        </View>
+        <CustomButton
+          onPress={() => setCreateOrgMenuActive(true)}
+          title={"Создать организацию"}
+          type="action"
+          fill="bordered"
+        />
       </View>
-    )
-  }
+    );
+  };
 
   const renderOrgs = () => {
     return (
@@ -230,7 +279,7 @@ const Organizations = () => {
           {founded.length > 0 && (
             <View style={{ marginBottom: 16 }}>
               <Text style={styles.sectionTitle}>Вы управляете</Text>
-              {founded.map(org => (
+              {founded.map((org) => (
                 <OrganizationCard
                   key={org.id}
                   id={org.id}
@@ -244,7 +293,7 @@ const Organizations = () => {
           {joined.length > 0 && (
             <View>
               <Text style={styles.sectionTitle}>Вы участник</Text>
-              {joined.map(org => (
+              {joined.map((org) => (
                 <OrganizationCard
                   key={org.id}
                   id={org.id}
@@ -257,33 +306,52 @@ const Organizations = () => {
           )}
         </View>
         <View style={styles.orgsActions}>
-          <View style={{ marginBottom: 8 }}><CustomButton onPress={() => setJoinByCodeMenuActive(true)} title={"Присоединиться по коду"} type='action' fill='solid' /></View>
-          <CustomButton onPress={() => setCreateOrgMenuActive(true)} title={"Создать организацию"} type='action' fill='bordered' />
+          <View style={{ marginBottom: 8 }}>
+            <CustomButton
+              onPress={() => setJoinByCodeMenuActive(true)}
+              title={"Присоединиться по коду"}
+              type="action"
+              fill="solid"
+            />
+          </View>
+          <CustomButton
+            onPress={() => setCreateOrgMenuActive(true)}
+            title={"Создать организацию"}
+            type="action"
+            fill="bordered"
+          />
         </View>
       </View>
-    )
-  }
+    );
+  };
 
   useEffect(() => {
-    LoadOrganizations()
+    LoadOrganizations();
     const interval = setInterval(() => {
-      LoadOrganizations()
-    }, 30000)
+      LoadOrganizations();
+    }, 30000);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <SafeAreaView style={{ backgroundColor: "#ffffff", height: "100%" }}>
       {createOrgMenuActive ? renderCreateOrgMenu() : null}
       {joinByCodeMenuActive ? renderJoinOrgMenu() : null}
-      <View style={styles.header}><Text style={styles.header__text}>Организации</Text></View>
+      <View style={styles.header}>
+        <Text style={styles.header__text}>Организации</Text>
+      </View>
       <ScrollView
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={LoadOrganizations} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={LoadOrganizations}
+          />
         }
       >
-        {(joined.length === 0 && founded.length === 0) ? renderNoOrgs() : renderOrgs()}
+        {joined.length === 0 && founded.length === 0
+          ? renderNoOrgs()
+          : renderOrgs()}
         {/* <CustomNotification type='success' message="Вы присоединились к организации" /> */}
       </ScrollView>
     </SafeAreaView>
@@ -299,7 +367,7 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#1F2024",
     opacity: 0.85,
-    zIndex: 5
+    zIndex: 5,
   },
   menu: {
     marginHorizontal: 24,
@@ -312,7 +380,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 20,
-    zIndex: 6
+    zIndex: 6,
   },
   menu__title: {
     fontFamily: fonts.Unbounded,
@@ -322,7 +390,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 16,
     paddingVertical: 8,
-    paddingHorizontal: 8
+    paddingHorizontal: 8,
   },
   menu__input: {},
   header: {
@@ -332,13 +400,13 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 16,
     justifyContent: "center",
-    alignItems: "center"
+    alignItems: "center",
   },
   header__text: {
     fontFamily: fonts.Unbounded,
     color: colors.black,
     fontWeight: 600,
-    fontSize: 16
+    fontSize: 16,
   },
   welcome: {
     backgroundColor: "#EAF2FF",
@@ -353,7 +421,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.Unbounded,
     fontSize: 16,
     color: colors.black,
-    marginBottom: 16
+    marginBottom: 16,
   },
   sectionTitle: {
     fontFamily: fonts.Unbounded,
@@ -361,14 +429,13 @@ const styles = StyleSheet.create({
     fontWeight: 600,
     fontSize: 14,
     marginLeft: 16,
-    marginBottom: 8
+    marginBottom: 8,
   },
   orgsActions: {
     marginHorizontal: 16,
     paddingVertical: 16,
-    marginBottom: 32
-  }
-})
-
+    marginBottom: 32,
+  },
+});
 
 export default Organizations;

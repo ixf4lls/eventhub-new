@@ -20,13 +20,25 @@ export default function RootLayout() {
           options={{ presentation: "modal", headerShown: false }}
         />
         <Stack.Screen
-          name="organization_modal" 
+          name="organization_modal"
           options={{
             headerShown: false,
           }}
         />
         <Stack.Screen
-          name="event_creation_modal" 
+          name="event_creation_modal"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="event_edit_modal"
+          options={{
+            headerShown: false,
+          }}
+        />
+        <Stack.Screen
+          name="event_search_modal"
           options={{
             headerShown: false,
           }}
