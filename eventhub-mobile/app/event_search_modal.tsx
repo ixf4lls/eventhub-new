@@ -21,11 +21,11 @@ const ModalScreen = () => {
 
   const searchbarRef = useRef<TextInput>(null);
 
-  // useEffect(() => {
-  //   if (searchbarRef.current) {
-  //     searchbarRef.current.focus();
-  //   }
-  // }, []);
+  useEffect(() => {
+    if (searchbarRef.current) {
+      searchbarRef.current.focus();
+    }
+  }, []);
 
   const search = useCallback(async (text: string) => {
     try {

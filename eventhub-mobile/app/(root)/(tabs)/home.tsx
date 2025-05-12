@@ -122,6 +122,7 @@ export default function Home() {
               pathname: "/event_search_modal",
             })
           }
+          hitSlop={10}
         >
           <Image
             source={require("../../../assets/icons/search.png")}
