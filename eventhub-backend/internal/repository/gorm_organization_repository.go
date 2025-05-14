@@ -27,7 +27,9 @@ func (r *GormOrganizationRepository) Create(name string, founderID uint) error {
 
 		var count int64
 		if err := r.db.Model(&OrganizationModel{}).Where("invite_code = ?", inviteCode).Count(&count).Error; err != nil {
-			return err
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
 		}
 
 		if count == 0 {

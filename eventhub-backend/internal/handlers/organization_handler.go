@@ -23,6 +23,7 @@ func NewOrganizationHandler(organizationService *service.OrganizationService) *O
 func (h *OrganizationHandler) Create(c echo.Context) error {
 	userID := c.Get("userID").(uint)
 	var req createOrgRequest
+
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Невалидный JSON")
 	}

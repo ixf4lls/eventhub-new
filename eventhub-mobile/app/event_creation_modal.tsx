@@ -35,10 +35,11 @@ type TempEvent = {
 
 const formatDate = (date: Date | null) => {
   if (!date) return "Выбрать дату";
-  return date.toLocaleDateString("ru-RU", {
+  return new Date(date).toLocaleDateString("ru-RU", {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Europe/Moscow",
   });
 };
 
@@ -47,6 +48,7 @@ const formatTime = (date: Date | null) => {
   return date.toLocaleTimeString("ru-RU", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Moscow",
   });
 };
 

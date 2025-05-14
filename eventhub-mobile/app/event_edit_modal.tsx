@@ -56,18 +56,20 @@ type EventResponse = {
 
 const formatDate = (date: Date | null) => {
   if (!date) return "Выбрать дату";
-  return date.toLocaleDateString("ru-RU", {
+  return new Date(date).toLocaleDateString("ru-RU", {
     day: "numeric",
     month: "long",
     year: "numeric",
+    timeZone: "Europe/Moscow",
   });
 };
 
 const formatTime = (date: Date | null) => {
-  if (!date || isNaN(date.getTime())) return "Выбрать время";
+  if (!date) return "Выбрать время";
   return date.toLocaleTimeString("ru-RU", {
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Moscow",
   });
 };
 
@@ -212,7 +214,6 @@ const ModalScreen = () => {
   }, [event_id]);
 
   const updateEvent = async () => {
-    console.log(org_id, event_id);
     try {
       const formattedDate = tempEvent.date
         ? tempEvent.date.toISOString()
@@ -246,7 +247,6 @@ const ModalScreen = () => {
           router.replace("/(auth)/login");
         }
         const errData = await response.json();
-        console.log(errData);
         throw new Error(`Ошибка запроса: ${response.status}`);
       }
 

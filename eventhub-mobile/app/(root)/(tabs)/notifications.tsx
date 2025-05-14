@@ -71,12 +71,15 @@ const Notifications = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const sortedNotifications = notifications.sort((a, b) => {
-    const dateA = new Date(a.created_at.split(" +")[0]);
-    const dateB = new Date(b.created_at.split(" +")[0]);
+  const sortedNotifications =
+    notifications == null
+      ? []
+      : notifications.sort((a, b) => {
+          const dateA = new Date(a.created_at.split(" +")[0]);
+          const dateB = new Date(b.created_at.split(" +")[0]);
 
-    return dateB.getTime() - dateA.getTime();
-  });
+          return dateB.getTime() - dateA.getTime();
+        });
 
   return (
     <SafeAreaView style={{ backgroundColor: "#ffffff", height: "100%" }}>
@@ -92,7 +95,7 @@ const Notifications = () => {
         }
       >
         <View style={styles.notifications}>
-          {notifications ? (
+          {notifications != null ? (
             sortedNotifications.map((notification) => {
               return (
                 <View key={notification.id}>

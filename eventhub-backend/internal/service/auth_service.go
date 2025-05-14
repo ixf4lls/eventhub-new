@@ -11,11 +11,11 @@ import (
 
 type AuthService struct {
 	cfg        config.Config
-	userRepo   repository.UserRepository
+	userRepo   repository.GormUserRepository
 	jwtManager customJwt.Manager
 }
 
-func NewAuthService(cfg config.Config, userRepo repository.UserRepository, jwtManager customJwt.Manager) *AuthService {
+func NewAuthService(cfg config.Config, userRepo repository.GormUserRepository, jwtManager customJwt.Manager) *AuthService {
 	return &AuthService{cfg: cfg, userRepo: userRepo, jwtManager: jwtManager}
 }
 

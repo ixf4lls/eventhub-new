@@ -14,7 +14,7 @@ const (
 )
 
 func (s *NotificationService) StartScheduler() {
-	ticker := time.NewTicker(1 * time.Minute)
+	ticker := time.NewTicker(1 * time.Second)
 
 	go func() {
 		for range ticker.C {
@@ -53,13 +53,13 @@ func (s *NotificationService) checkAndSendReminders() error {
 		switch {
 		case duration >= reminder1dBefore && duration < time.Hour*24:
 			reminderType = "reminder_1d"
-		case duration >= reminder1hBefore && duration < time.Hour*2:
+		case duration >= time.Minute*59 && duration <= time.Minute*61:
 			reminderType = "reminder_1h"
 		default:
 			continue
 		}
 
-		participants, err := s.eventRepo.GetParticipants(event.ID)
+		participants, err := s.eventRepo.GetParticipantIDs(event.ID)
 		if err != nil {
 			log.Printf("Ошибка при получении участников для события %d: %v", event.ID, err)
 			continue

@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { fetchWithToken } from "@/utils/tokenInterceptor";
 import { format, parseISO } from "date-fns";
 import { ru } from "date-fns/locale";
+import ParticipantCard from "@/components/ParticipantCard";
 
 type Event = {
   id: number;
@@ -42,6 +43,13 @@ type EventResponse = {
   is_creator: boolean;
 };
 
+type Participant = {
+  id: number;
+  first_name: string;
+  last_name: string;
+  username: string;
+};
+
 const formatDate = (date: string) => {
   const parsedDate = parseISO(date);
   const formattedDate = format(parsedDate, "d MMMM", {
@@ -59,14 +67,37 @@ const formatTime = (time: string) => {
 const ModalScreen = () => {
   const router = useRouter();
 
-  const [event, setEvent] = useState<Event>();
+  const [event, setEvent] = useState<Event>({
+    id: 0,
+    title: "",
+    description: "",
+    category: "",
+    is_public: false,
+    status: "",
+    date: "",
+    start_time: "",
+    end_time: "",
+    location: "",
+    creator_id: 0,
+    organization_id: 0,
+  });
+
   const [userJoined, setUserJoined] = useState<boolean>(false);
   const [isCreator, setIsCreator] = useState<boolean>(false);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [creator, setCreator] = useState<Participant>({
+    id: 0,
+    username: "",
+    first_name: "",
+    last_name: "",
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const { id, isCompleted } = useLocalSearchParams();
 
   const LoadData = async (id: number) => {
     try {
+      setIsLoading(true);
       const response = (await fetchWithToken(
         "http://" + ADDRESS + "/api/events/" + id,
         {
@@ -85,20 +116,19 @@ const ModalScreen = () => {
       setEvent(data.event);
       setUserJoined(data.is_joined);
       setIsCreator(data.is_creator);
+
+      // Now we have the event data, we can load the creator
+      if (data.event.creator_id) {
+        await LoadCreatorData(data.event.creator_id);
+      }
+
+      setIsLoading(false);
     } catch (error) {
+      setIsLoading(false);
       Alert.alert("Ошибка сервера", "Проверьте подключение.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   };
-
-  useEffect(() => {
-    LoadData(Number(id));
-    const interval = setInterval(() => {
-      LoadData(Number(id));
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, []);
 
   const JoinEvent = async (event_id: number) => {
     try {
@@ -117,6 +147,7 @@ const ModalScreen = () => {
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setUserJoined(true);
+      LoadParticipants(event_id);
     } catch (error) {
       Alert.alert("Ошибка сервера", "Проверьте подключение.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -141,6 +172,7 @@ const ModalScreen = () => {
       }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setUserJoined(false);
+      LoadParticipants(event_id);
     } catch (error) {
       Alert.alert("Ошибка сервера", "Проверьте подключение.");
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -202,18 +234,95 @@ const ModalScreen = () => {
     }
   };
 
+  const LoadParticipants = async (eventId: number) => {
+    if (!eventId) return;
+
+    try {
+      const response = (await fetchWithToken(
+        `http://${ADDRESS}/api/events/${eventId}/participants`,
+        { method: "GET" },
+      )) as Response;
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.replace("/(auth)/login");
+        }
+        throw new Error(`Ошибка запроса: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setParticipants(data.participants);
+    } catch (error) {
+      Alert.alert("Ошибка сервера", "Проверьте подключение.");
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
+
+  const LoadCreatorData = async (userId: number) => {
+    if (!userId || userId === 0) return;
+
+    try {
+      const response = (await fetchWithToken(
+        `http://${ADDRESS}/api/users/${userId}`,
+        { method: "GET" },
+      )) as Response;
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.replace("/(auth)/login");
+        }
+        throw new Error(`Ошибка запроса: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setCreator(data.user);
+    } catch (error) {
+      console.error("Error loading creator data:", error);
+      Alert.alert(
+        "Ошибка загрузки данных организатора",
+        "Проверьте подключение.",
+      );
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
+  };
+
+  const refreshData = () => {
+    const eventId = Number(id);
+    if (eventId) {
+      LoadData(eventId);
+      LoadParticipants(eventId);
+    }
+  };
+
+  useEffect(() => {
+    const eventId = Number(id);
+    if (eventId) {
+      refreshData();
+    }
+
+    const interval = setInterval(() => {
+      refreshData();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [id]);
+
   return (
-    <View style={{ flex: 1, backgroundColor: "#ffffff" }}>
+    <View style={styles.container}>
       <TouchableOpacity onPress={() => router.back()} style={styles.close}>
         <Image
           source={require("../assets/icons/close.png")}
           style={{ height: 16, width: 16 }}
         />
       </TouchableOpacity>
-      <ScrollView style={styles.container}>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollViewContent}
+      >
         <Image
           source={require("../assets/images/blank_image_modal.png")}
-          style={{ height: "50%", width: "100%" }}
+          style={styles.headerImage}
         />
 
         <View style={styles.content}>
@@ -236,6 +345,7 @@ const ModalScreen = () => {
               </Text>
             </View>
           </View>
+
           <View style={styles.mainText}>
             <Text style={styles.title}>{event?.title}</Text>
             <Text style={styles.category}>{event?.category}</Text>
@@ -255,6 +365,7 @@ const ModalScreen = () => {
               </Text>
             </View>
           </View>
+
           <View style={styles.location}>
             <Image
               source={require("../assets/icons/location.png")}
@@ -264,9 +375,46 @@ const ModalScreen = () => {
           </View>
         </View>
 
-        <Text>{event?.creator_id}</Text>
+        {/* Дополнительная информация */}
+        <View style={styles.additionalInfo}>
+          <Text style={styles.sectionTitle}>Организатор</Text>
+          {isLoading ? (
+            <Text style={styles.loadingText}>Загрузка данных...</Text>
+          ) : creator?.username ? (
+            <ParticipantCard
+              username={creator.username}
+              first_name={creator.first_name}
+              last_name={creator.last_name}
+            />
+          ) : (
+            <Text style={styles.noParticipants}>
+              Информация об организаторе недоступна
+            </Text>
+          )}
+        </View>
+
+        {/* Участники мероприятия */}
+        <View style={styles.participantsSection}>
+          <Text style={styles.sectionTitle}>Участники</Text>
+          {isLoading ? (
+            <Text style={styles.loadingText}>Загрузка данных...</Text>
+          ) : participants && participants.length > 0 ? (
+            participants.map((participant, index) => (
+              <View style={styles.participant} key={index}>
+                <ParticipantCard
+                  username={participant.username}
+                  first_name={participant.first_name}
+                  last_name={participant.last_name}
+                />
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noParticipants}>Пока нет участников</Text>
+          )}
+        </View>
       </ScrollView>
 
+      {/* Нижние кнопки */}
       {isCompleted == "false" ? (
         isCreator ? (
           <View style={styles.edit_buttons}>
@@ -328,20 +476,31 @@ const ModalScreen = () => {
 
 const styles = StyleSheet.create({
   container: {
-    height: "100%",
-    display: "flex",
+    flex: 1,
+    backgroundColor: "#ffffff",
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollViewContent: {
+    paddingBottom: 100,
+  },
+  headerImage: {
     width: "100%",
-    marginBottom: 32,
+    height: 250,
+    resizeMode: "cover",
   },
   close: {
     position: "absolute",
     top: 16,
     right: 16,
     zIndex: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.7)",
+    borderRadius: 12,
+    padding: 8,
   },
   content: {
     backgroundColor: "#ffffff",
-    height: 555,
     width: "100%",
     paddingHorizontal: 24,
     paddingVertical: 16,
@@ -350,6 +509,7 @@ const styles = StyleSheet.create({
     display: "flex",
     flexDirection: "row",
     gap: 8,
+    marginBottom: 8,
   },
   join: {
     borderRadius: 6,
@@ -396,8 +556,15 @@ const styles = StyleSheet.create({
     fontSize: 8,
     textTransform: "uppercase",
   },
+  loadingText: {
+    fontFamily: fonts.Montserrat,
+    fontSize: 14,
+    color: colors.grey_text,
+    fontStyle: "italic",
+    marginTop: 4,
+  },
   mainText: {
-    height: 350,
+    marginBottom: 20,
   },
   title: {
     marginTop: 8,
@@ -419,11 +586,13 @@ const styles = StyleSheet.create({
     fontWeight: 400,
     fontSize: 12,
     marginTop: 16,
+    minHeight: 100,
   },
   date: {
     display: "flex",
     flexDirection: "row",
     gap: 8,
+    marginBottom: 8,
   },
   date__item: {
     borderRadius: 6,
@@ -446,6 +615,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     alignItems: "flex-start",
+    marginBottom: 20,
   },
   location__text: {
     fontFamily: fonts.Montserrat,
@@ -453,25 +623,67 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.secondary,
   },
+  participantsSection: {
+    paddingHorizontal: 24,
+    marginTop: 32,
+  },
+  sectionTitle: {
+    fontFamily: fonts.Unbounded,
+    fontWeight: 600,
+    fontSize: 14,
+    color: colors.black,
+    marginBottom: 8,
+  },
+  participant: {
+    paddingVertical: 8,
+  },
+  participantName: {
+    fontFamily: fonts.Montserrat,
+    fontSize: 14,
+    color: colors.secondary,
+  },
+  noParticipants: {
+    fontFamily: fonts.Montserrat,
+    fontSize: 14,
+    color: colors.grey_text,
+    fontStyle: "italic",
+  },
+  additionalInfo: {
+    paddingHorizontal: 24,
+    marginTop: 20,
+    borderBottomColor: "#EEEEEE",
+  },
+  infoText: {
+    fontFamily: fonts.Montserrat,
+    fontSize: 12,
+    color: colors.grey_text,
+  },
   button: {
+    position: "absolute",
     bottom: 24,
+    left: 0,
+    right: 0,
     paddingHorizontal: 24,
   },
   edit_buttons: {
-    marginHorizontal: 24,
-    display: "flex",
+    position: "absolute",
+    bottom: 24,
+    left: 0,
+    right: 0,
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 24,
+    paddingHorizontal: 24,
     gap: 8,
   },
   completed: {
-    width: "100%",
+    position: "absolute",
+    bottom: 24,
+    left: 0,
+    right: 0,
     height: 48,
     display: "flex",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 32,
   },
   completed__text: {
     fontFamily: fonts.Unbounded,

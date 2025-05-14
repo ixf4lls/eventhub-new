@@ -1,2 +1,2 @@
-export const ADDRESS = '188.187.169.254:3000'
-export const ADDRESS_NO_PORT = '188.187.169.254'
+export const ADDRESS = '188.187.184.180:3000'
+export const ADDRESS_NO_PORT = '188.187.184.180'

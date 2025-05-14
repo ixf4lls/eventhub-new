@@ -14,6 +14,13 @@ func (UserModel) TableName() string {
 	return "users"
 }
 
+type UserResponse struct {
+	ID        uint   `json:"id"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	UserName  string `json:"username"`
+}
+
 type UserAsMember struct {
 	ID        uint   `json:"id"`
 	FirstName string `json:"first_name"`

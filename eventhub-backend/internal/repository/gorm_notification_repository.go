@@ -45,7 +45,10 @@ func (r *GormNotificationRepository) GetAll(userID uint) ([]NotificationModel, e
 func (r *GormNotificationRepository) Exists(eventID, userID uint, msgType string) (bool, error) {
 	var notification NotificationModel
 
-	if err := r.db.Where("user_id = ? AND event_id = ?", userID, eventID).First(&notification).Error; err != nil {
+	if err := r.db.Where("user_id = ? AND event_id = ? AND type = ?", userID, eventID, msgType).First(&notification).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
 		return false, err
 	}
 

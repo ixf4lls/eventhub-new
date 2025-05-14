@@ -161,6 +161,10 @@ func (s *EventService) Update(userID, eventID, orgID uint, input domain.CreateEv
 	return nil
 }
 
+func (s *EventService) GetParticipantIDs(eventID uint) ([]uint, error) {
+	return s.eventRepo.GetParticipantIDs(eventID)
+}
+
 func (s *EventService) UpdateSearchIndex() error {
 	events, err := s.eventRepo.GetAll()
 

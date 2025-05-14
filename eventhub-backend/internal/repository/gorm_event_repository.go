@@ -227,7 +227,7 @@ func (r *GormEventRepository) GetEventModelByID(eventID uint) (EventModel, error
 	return event, nil
 }
 
-func (r *GormEventRepository) GetParticipants(eventID uint) ([]uint, error) {
+func (r *GormEventRepository) GetParticipantIDs(eventID uint) ([]uint, error) {
 	var participantIDs []uint
 	err := r.db.Table("event_participants").Where("event_id = ?", eventID).Pluck("user_id", &participantIDs).Error
 	return participantIDs, err

@@ -2,6 +2,8 @@ import EventCard from "@/components/EventCard";
 import { ADDRESS_NO_PORT } from "@/constants/address";
 import { colors } from "@/constants/colors";
 import { fonts } from "@/constants/fonts";
+import { format, parseISO } from "date-fns";
+import { ru } from "date-fns/locale";
 import { router } from "expo-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -26,6 +28,20 @@ const ModalScreen = () => {
       searchbarRef.current.focus();
     }
   }, []);
+
+  const formatDate = (date: string) => {
+    const parsedDate = parseISO(date);
+    const formattedDate = format(parsedDate, "d MMMM", {
+      locale: ru,
+    }).toUpperCase();
+
+    return formattedDate;
+  };
+
+  const formatTime = (time: string) => {
+    if (!time) return "00:00";
+    return time.slice(0, 5);
+  };
 
   const search = useCallback(async (text: string) => {
     try {
@@ -58,9 +74,9 @@ const ModalScreen = () => {
   const handleChange = (text: string) => {
     setQuery(text);
     if (text.length >= 2) {
-      search(text); // Запускаем поиск только если длина текста >= 2
+      search(text);
     } else {
-      setResults([]); // Очищаем результаты
+      setResults([]);
     }
   };
 
@@ -88,9 +104,9 @@ const ModalScreen = () => {
                   id={event._source.id}
                   title={event._source.title}
                   category={event._source.category}
-                  date={event._source.date}
-                  start_time={event._source.start_time}
-                  end_time={event._source.end_time}
+                  date={formatDate(event._source.date)}
+                  start_time={formatTime(event._source.start_time)}
+                  end_time={formatTime(event._source.end_time)}
                   location={event._source.location}
                   isCompleted={event._source.is_completed}
                 />

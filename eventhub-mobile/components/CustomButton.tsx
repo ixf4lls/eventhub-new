@@ -51,6 +51,7 @@ const CustomButton = ({
       display: "flex",
       justifyContent: "center",
       alignItems: "center",
+      backgroundColor: "#ffffff",
     },
     text_bordered: {
       color: type == "action" ? colors.primary : colors.error,

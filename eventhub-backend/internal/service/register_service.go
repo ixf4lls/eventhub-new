@@ -9,10 +9,10 @@ import (
 )
 
 type RegisterService struct {
-	userRepo repository.UserRepository
+	userRepo repository.GormUserRepository
 }
 
-func NewRegisterService(userRepo repository.UserRepository) *RegisterService {
+func NewRegisterService(userRepo repository.GormUserRepository) *RegisterService {
 	return &RegisterService{userRepo: userRepo}
 }
 
